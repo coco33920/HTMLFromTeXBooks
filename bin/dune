@@ -1,4 +1,4 @@
 (executable
- (public_name htmlfromtexbooks)
  (name main)
+ (public_name htmlfromtexbooks)
  (libraries htmlfromtexbooks))

@@ -1,6 +1,8 @@
 type chapter = Nil | Chap of string * string * string list * int;; (*name # list of lines*)
+type glossary = Nul | Entry of string * string * string;;
 
 type book = chapter list
+let glossaries = Hashtbl.create 1;;
 let string_to_list s = List.of_seq (String.to_seq s);;
 let parse_book ?(book=true) str = 
     let a = if book then Str.regexp "\\\\chapter" else Str.regexp "\\\\section" in
@@ -11,13 +13,13 @@ let print_chapter = function
   | Nil -> print_string "Nil\n"
   | Chap(s,_,q,_) -> Printf.printf "Name : %s\n" s; List.iteri (fun i str -> Printf.printf "Line %d : %s\n" i str) q
 
-let read_file filename = 
+let read_file ?(joining="\n") filename = 
   let lines = ref [] in
   let chan = open_in filename in
   try
     while true; do
       let a = input_line chan in if not (String.starts_with ~prefix:"//" a) then lines := a :: !lines
-    done; String.concat "\n" !lines
+    done; String.concat joining !lines
   with End_of_file ->
     close_in chan;
     String.concat "\n" (List.rev !lines) ;;
@@ -45,6 +47,7 @@ let extract_chapter chapter i =
     match lst with 
       | [] -> acc,""
       | t::q when t='}' -> acc,transform_list_of_chars_to_string_without_the_newline q
+      | t::q when t='*' -> extract_name q acc
       | t::q when t='{' -> extract_name q acc
       | t::q when t='\\' -> extract_name q acc
       | t::q -> extract_name q (acc^(String.make 1 t)) in
@@ -123,10 +126,62 @@ let extract_chapters file =
       | Nil -> ""
       | Chap(s,c,_,i) -> let line = "<h2 id=\"" ^ (string_of_int i) ^ "\"> Chapter " ^ (string_of_int i) ^ " : " ^ s ^ "</h2>\n<br>" in line ^ c;;
 
+  let not_is_empty = function
+    | "\n" -> false 
+    | "" -> false 
+    | s when String.trim s = "" -> false 
+    | _ -> true
+
+  let parse_glossary_entry entry = 
+    let rec read_desc acc = function
+      | [] -> acc,[],read_name
+      | t::q when t='{' -> read_desc acc q
+      | t::q when t='}' -> acc,q,read_name
+      | t::q -> read_desc (acc^(String.make 1 t)) q 
+    and read_name acc = function
+      | [] -> acc,[],read_def
+      | t::q when t='{' -> read_name acc q
+      | t::q when t='}' -> acc,q,read_def
+      | t::q when t=',' -> acc,q,read_def
+      | t::q -> read_name (acc^(String.make 1 t)) q
+    and read_def acc = function
+      | [] -> acc,[],(fun x -> x)
+      | t::q when t='{' -> read_def acc q 
+      | t::_ when t='}' -> acc,[], (fun x -> x)
+      | t::q -> read_def (acc^(String.make 1 t)) q
+    and read func acc = function
+      | [] -> acc
+      | t::q when t=' ' -> read func acc q
+      | t::q when t='=' -> let a,q2,f = func "" q in read f (a::acc) q2
+      | t::q -> read func acc q
+    in let a = read read_desc [] (string_to_list entry) in a;;
+
+  let parse_glossaries file = 
+    let glossary_regexp = Str.regexp "\\\\newglossaryentry" in
+    let newline_regexp = Str.regexp "\n" in
+    let string = read_file file in
+    let list_of_entries = Str.split glossary_regexp string |> List.filter (not_is_empty)
+    |> List.map (Str.global_replace newline_regexp "") in
+    list_of_entries;; 
+
   let write_to_file file str =
     let f = open_out file in
     output_string f str;
     flush f;
     close_out f;;
 
-  let test_chapter_to_file chapter file = write_to_file file (chapter_to_string chapter);;
+  let prepare_body ?(name="TeX Created File") str = 
+    let t = "<title>"^name^"</title>" in
+    let t = String.cat t "<body>\n" in
+    let t = String.cat t "<style>\n .center { \n margin:auto; \n text-align: center; \n } \n </style>" in
+    let t = String.cat t "<h1 id=\"title\" class=\"center\">"^name^"</h1>\n\n" in
+    let t = String.cat t str in
+    let t = String.cat t "</body>" in
+    t;;
+
+  let write_core_chapter_to_file chapter file = write_to_file file (prepare_body (chapter_to_string chapter));;
+  let write_book ?(name="TeX Created File") file (chapters: chapter list)= 
+    List.map (chapter_to_string) chapters |> 
+    String.concat "\n\n<br>" |>
+    prepare_body ~name:name |> 
+    write_to_file file;;
