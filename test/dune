@@ -1,0 +1,3 @@
+(test
+ (name htmlfromtexbooks)
+ (libraries htmlfromtexbooks))

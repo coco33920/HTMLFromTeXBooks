@@ -1,0 +1,4 @@
+(executable
+ (public_name htmlfromtexbooks)
+ (name main)
+ (libraries htmlfromtexbooks))
