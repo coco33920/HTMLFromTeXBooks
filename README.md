@@ -29,3 +29,13 @@ The project currently translate *LaTeX* to human-readable HTML files (the line b
 
 If you have an idea post an ISSUE, any contribution is welcomed :)
 Let make no one ever forgets the name ~~Enter..~~ OCAML :)!
+
+## Installing
+```bash
+git clone git@github.com:coco33920/HTMLFromTeXBooks.git
+dune build @install
+dune install
+```
+
+## Usage
+WILL COME
