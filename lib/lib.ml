@@ -86,14 +86,36 @@ let extract_chapters file =
     Str.global_replace end_document_regexp "" @@
     str
 
+  let parse_more_than_generalities str =
+    let textit_regexp = Str.regexp "\\\\textit"
+    and textbf_regexp = Str.regexp "\\\\textbf" in
+    let stack = Stack.create () in
+    let rec aux last_char result lst = 
+      match lst with
+        | [] -> result
+        | t::q when t='{' && last_char='t' (*\textit*)
+            -> Stack.push "</i>" stack; aux t (result^"<i>") q
+        | t::q when t='{' && last_char='f' (*\textbf*)
+            -> Stack.push "</b>" stack; aux t (result^"<b>") q
+        | t::q when t='}' 
+            -> if Stack.is_empty stack then (aux t (result^"}") q) 
+              else let p = Stack.pop stack in aux t (result^p) q
+        | t::q -> aux t (result^(String.make 1 t)) q
+    in 
+    let s = aux ' ' "" (string_to_list str) in
+    let s = Str.global_replace textit_regexp "" s in
+    let s = Str.global_replace textbf_regexp ""s in
+    s;;
 
-let transform_chapter chapter = 
-  match chapter with
-    | Nil -> Nil
-    | Chap(s,_,q,i) -> let g = List.map replace_generalities q in 
-                              let c = String.concat "\n" g in 
-                              let c = "<div>\n\t" ^ (String.trim c) ^ "\n<div><br/>\n" in
-                              Chap(String.trim s,c,g,i);;
+
+  let transform_chapter chapter = 
+    match chapter with
+      | Nil -> Nil
+      | Chap(s,_,q,i) -> let g = List.map replace_generalities q in
+                                let c = String.concat "\n" g in 
+                                let c = parse_more_than_generalities c in
+                                let c = "<div>\n\t" ^ (String.trim c) ^ "\n<div><br/>\n" in
+                                Chap(String.trim s,c,g,i);;
 
 
   let chapter_to_string chapter = 
