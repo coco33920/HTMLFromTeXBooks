@@ -5,22 +5,18 @@
 (generate_opam_files true)
 
 (source
- (github username/reponame))
+ (github coco33920/HTMLFromTeXBooks))
 
-(authors "Author Name")
+(authors "Charlotte THOMAS")
 
-(maintainers "Maintainer Name")
+(maintainers "Charlotte THOMAS")
 
-(license LICENSE)
-
-(documentation https://url/to/documentation)
+(license MIT)
 
 (package
  (name htmlfromtexbooks)
- (synopsis "A short synopsis")
- (description "A longer description")
- (depends ocaml dune)
- (tags
-  (topics "to describe" your project)))
+ (synopsis "From TeX To Human-Readable HTML")
+ (description "A simple command line tool to generate human-readable HTML from a LaTeX Book/Article")
+ (depends ocaml dune))
 
 ; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project
