@@ -27,6 +27,25 @@ type book = chapter list;;
 @param s the string to transform *)
 let string_to_list s = List.of_seq (String.to_seq s);;
 
+(**Automatic detection of Glossary*)
+let detect_glossary (book: chapter list) =
+  let first = List.hd book in
+  let a = (match first with | Nil -> [] | Chap(_,_,q,_) -> q) in
+  let line_list = a in
+  let rec extract_name result list = 
+    match list with
+      | [] -> result 
+      | t::_ when t='}' -> result
+      | t::q -> extract_name (result^(String.make 1 t)) q
+  in let rec detect lst =
+  match lst with 
+    | [] -> false,""
+    | t::_ when (String.starts_with ~prefix:"\\input{" t) -> true,(extract_name "" (string_to_list t))
+    | _::q -> detect q
+  in
+  let s,b = detect line_list in
+  s,(Str.global_replace (Str.regexp "\\\\input{") "" b)
+
 (** The Hashtbl with the (name,defition) of glossaries by their key *)
 let glossaries = ((Hashtbl.create 1):(string,string * string) Hashtbl.t);;
 
@@ -249,6 +268,10 @@ let parse_glossaries file =
     |> List.map (Str.global_replace newline_regexp "") in
     list_of_entries;; 
 
+let init_glossary glossary = 
+  Hashtbl.clear glossaries;
+  parse_glossaries glossary |> List.iter (parse_glossary_entry);;
+  
 (** Combines parse_glosaries and parse_glossary_entry *)
 let total_glossaries file = 
   parse_glossaries file 
