@@ -29,4 +29,5 @@ let msg = "htmlfromtex --input <file> --output <out_file> [--use-glossary <gloss
 let _ =
   Arg.parse spec (fun _ -> ()) msg;
   if !filename = "" || !outname = "" then (print_endline msg; exit 0)
-  else parse_filename !filename !outname !start_chapter !name
+  else if not (String.equal "" !glossary_name) then (Htmlfromtexbooks.Lib.total_glossaries (!glossary_name));
+       parse_filename !filename !outname !start_chapter !name
