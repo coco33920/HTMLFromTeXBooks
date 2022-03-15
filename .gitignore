@@ -2,4 +2,3 @@ _build/
 _build/*
 *.py
 *.tex 
-*.html
