@@ -15,6 +15,7 @@ The project currently translate *LaTeX* to human-readable HTML files (the line b
 
 - Parsing chapter by chapter
 - Automatically detect a tex file, generate a name for the output, detects the glossary and use the configuration file for name/starting chapter
+- Extracting the title of the tex file for name
 - Printing chapter
 - LaTeX `center` environment
 - LaTeX macros
