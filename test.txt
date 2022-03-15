@@ -1,5 +1,5 @@
 \chapter{Oh... Crap.}
-
+test22
 \textit{Units, times, and language has been translated from Union Standard to Earth Standard}\par
 \textit{\textbf{Aarin POV, A few months before the first chapter, TW: Abusive parents, traumas}} \par
 \bigskip
@@ -13,7 +13,7 @@ famous discovery made a few union years ago, no more than a century ago he corre
 
 Unfortunately the mission was really boring, the automated probes stationed in the system were 
 excellent at their job, so he didn't have a lot to do. The next refueling ship was excepted next 
-month, but he really was lonely. On a whim he decided to check on his latest… discovery.\par
+month, but he really was lonely. On a whim he decided to check on his latest22… discovery.\par
 \bigskip
 
 See, his society does not have the concept of… gender it was a completely alien concept to them, so as a 
