@@ -28,23 +28,30 @@ type book = chapter list;;
 let string_to_list s = List.of_seq (String.to_seq s);;
 
 (**Automatic detection of Glossary*)
-let detect_glossary (book: chapter list) =
+let detect_prelude (book: chapter list) =
   let first = List.hd book in
   let a = (match first with | Nil -> [] | Chap(_,_,q,_) -> q) in
   let line_list = a in
+  let tbl = Hashtbl.create 1 in
   let rec extract_name result list = 
     match list with
-      | [] -> result 
+      | [] -> result
       | t::_ when t='}' -> result
       | t::q -> extract_name (result^(String.make 1 t)) q
   in let rec detect lst =
   match lst with 
-    | [] -> false,""
-    | t::_ when (String.starts_with ~prefix:"\\input{" t) -> true,(extract_name "" (string_to_list t))
+    | [] -> tbl
+    | t::q when (String.starts_with ~prefix:"\\input{" t) ->
+        let n = extract_name "" (string_to_list t) 
+        in let n = Str.global_replace (Str.regexp "\\\\input{") "" n  
+        in Hashtbl.add tbl "gloss" n; detect q
+    | t::q when (String.starts_with ~prefix:"\\title{" t) -> 
+        let n = extract_name "" (string_to_list t) 
+        in let n = Str.global_replace (Str.regexp "\\\\title{") "" n
+        in let n = Str.global_replace (Str.regexp "\\\\\\\\") ":" n 
+        in Hashtbl.add tbl "title" n; detect q
     | _::q -> detect q
-  in
-  let s,b = detect line_list in
-  s,(Str.global_replace (Str.regexp "\\\\input{") "" b)
+  in detect line_list;;
 
 (** The Hashtbl with the (name,defition) of glossaries by their key *)
 let glossaries = ((Hashtbl.create 1):(string,string * string) Hashtbl.t);;

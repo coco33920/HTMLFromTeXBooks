@@ -72,17 +72,19 @@ let _ =
   else
     Printf.printf "output filename is %s\n" !outname;
   let chapters = Htmlfromtexbooks.Lib.extract_chapters !filename
+  in let tbl = Htmlfromtexbooks.Lib.detect_prelude chapters
   in if List.length chapters = 0 then (print_endline "File is empty"; exit 2)
   else
-    if !glossary_name = "" then 
-      let _,b = (Htmlfromtexbooks.Lib.detect_glossary chapters) in 
-      glossary_name := b;
+    if !glossary_name = "" then
+      let a = try Hashtbl.find tbl "gloss" with _ -> "" in
+      glossary_name := a;
       Printf.printf "Glossary have been extracted from the file and is %s\n" !glossary_name;
   else
     Printf.printf "Glossary filename is %s\n" !glossary_name;
   if !name = "" then
-    (name := default_name;
-    Printf.printf "Name have been automatically been set as %s\n" !name)
+    let n = try Hashtbl.find tbl "title" with _ -> default_name in
+    name := n;
+    Printf.printf "Name have been automatically extracted as %s\n" !name
   else
     Printf.printf "Name is %s\n" !name;
   if !start_chapter = -1 then

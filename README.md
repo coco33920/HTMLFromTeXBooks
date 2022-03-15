@@ -14,6 +14,7 @@ the full specification of TeX and LaTeX
 The project currently translate *LaTeX* to human-readable HTML files (the line breaks in the HTML follows the line breaks in the TeX file while line breaks on HTML is let to the browser.) and supports the following features:
 
 - Parsing chapter by chapter
+- Automatically detect a tex file, generate a name for the output, detects the glossary and use the configuration file for name/starting chapter
 - Printing chapter
 - LaTeX `center` environment
 - LaTeX macros
