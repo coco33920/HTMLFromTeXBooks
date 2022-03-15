@@ -140,10 +140,16 @@ let replace_generalities str =
   Str.global_replace end_document_regexp "" @@
   str;;
 
+let rec parse_urls acc = function
+  | [] -> acc,[]
+  | t::q when t='}' -> acc,q
+  | t::q -> parse_urls (acc^(String.make 1 t)) q
+
 (** Parse more complex command : \textit, \textbf and \gls *)
 let parse_more_than_generalities str =
   let textit_regexp = Str.regexp "\\\\textit"
   and textbf_regexp = Str.regexp "\\\\textbf"
+  and url_regexp = Str.regexp "\\\\url"
   and gls_regexp = Str.regexp "\\\\gls" in
   let stack = Stack.create () in
     let rec aux last_char result lst = 
@@ -156,14 +162,18 @@ let parse_more_than_generalities str =
         | t::q when t='{' && last_char='s' (*\gls*)
             -> if glossary_provided () then (let  (name,_),(desc),l = (recognize_gls q) in aux '}' (result^"<a href=\""^desc^"\">"^name^"</a>") l)
               else aux t (result^"{") q
+        | t::q when t='{' && last_char='l'
+             -> let name,remainder = parse_urls "" q in aux '}' (result^"<a href=\""^name^"\">"^name^"</a>") remainder
         | t::q when t='}' 
             -> if Stack.is_empty stack then (aux t (result^"}") q) 
-              else let p = Stack.pop stack in aux t (result^p) q
+              else let p = Stack.pop stack 
+              in aux t (result^p) q
         | t::q -> aux t (result^(String.make 1 t)) q
   in 
   let s = aux ' ' "" (string_to_list str) in
   let s = Str.global_replace textit_regexp "" s in
-  let s = Str.global_replace textbf_regexp ""s in
+  let s = Str.global_replace textbf_regexp "" s in
+  let s = Str.global_replace url_regexp "" s in
   let s = if glossary_provided () then let s = Str.global_replace gls_regexp "" s in s else s in
   s;;
 
