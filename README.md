@@ -32,7 +32,15 @@ The project currently translate *LaTeX* to human-readable HTML files (the line b
 If you have an idea post an ISSUE, any contribution is welcomed :)
 Let make no one ever forgets the name ~~Enter..~~ OCAML :)!
 
-## Installing
+## Installing
+Be sure to have dune installed and OCaml version >=4.08
+```bash
+ocaml --version #must be >= 4.08
+```
+```bash
+opam install dune
+```
+and
 ```bash
 git clone git@github.com:coco33920/HTMLFromTeXBooks.git
 dune build @install
