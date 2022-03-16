@@ -41,6 +41,41 @@ type section = Nil (**Nul*)
               | Subsection of string * section list * int (**Subsection: a subsection is the subsection of a text*)
               | Section of string * section list * int (**A section is a name and the list of all nodes/subsection*)
               | Chap of string * section  list * int
+
+let print_list_of_section section =
+  let rec aux result last_index lst = match lst with
+    | [] -> result
+    | Nil::q -> aux result last_index q
+    | Node(s,_)::l -> aux (result^Printf.sprintf "%s\n" s) last_index l
+    | Subsubsection(s,sec,i)::l -> 
+        let results = aux "" last_index sec in 
+        let last_index = (string_of_int i) in
+        let title = Printf.sprintf "<h4 id=\"%s.%d\">Subsubsection %s.%d : %s</h4><br>\n" last_index i last_index i (s) in
+        let total = result^title^results in
+        aux total (Printf.sprintf "%s.%d" last_index i) l
+    | Subsection(s,sec,i)::l ->
+      let results = aux "" last_index sec in 
+      let last_index = (string_of_int i) in
+      let title = Printf.sprintf "<h3 id=\"%s.%d\">Subsection %s.%d : %s</h3><br>\n" last_index i last_index i (s) in
+      let total = result^title^results in
+      aux total (Printf.sprintf "%s.%d" last_index i) l
+    | Section(s,sec,i)::l ->
+      let results = aux "" last_index sec in
+      let last_index = (string_of_int i) in
+      let title = Printf.sprintf "<h3 id=\"%s.%d\">Subsection %s.%d : %s</h3><br>\n" last_index i last_index i (s) in
+      let total = result^title^results in
+      aux total (Printf.sprintf "%s.%d" last_index i) l
+    | Chap(s,sec,i)::l ->
+      let results = aux "" last_index sec in 
+      let last_index = (string_of_int i) in
+      let title = Printf.sprintf "<h1 id=\"%s\">Chapter %d : %s </h1><br>\n" last_index i s in
+      let total = result^title^results in
+      aux total (string_of_int i) l
+  in aux "" "" section 
+    
+
+
+
 (** Chapter type : A chapter is Nil Or A tuple of a string (name), a string (the chapter text) 
 a string list (the lines of chapter text) and an integer (the number of the chapter) *)
 type chapter = Nill | Chap of string * section list * int
@@ -174,5 +209,5 @@ let parse_file file =
   let str = replace_generalities str in
   match a with
     | "book" -> parse_chapter str
-    | "chapters" -> parse_section str
+    | "article" -> parse_chapter str
     | _ -> failwith "only articles books are supported";;
