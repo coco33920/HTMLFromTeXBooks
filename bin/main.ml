@@ -32,8 +32,8 @@ let write_default_configuration channel =
 let load_configuration () = 
   let a = Unix.getenv "HOME" in
   let b = a ^ (Filename.dir_sep) ^ ".htmlfromtexbooks" 
-  in if not (Sys.file_exists b) then Sys.mkdir b 0o755 
-  else if not (Sys.is_directory b) then (Sys.remove b; Sys.mkdir b 0o755);
+  in if not (Sys.file_exists b) then Unix.mkdir b 0o640 
+  else if not (Sys.is_directory b) then (Sys.remove b; Unix.mkdir b 0o755);
   let c = b ^ (Filename.dir_sep) ^ ".config" in 
   if not (Sys.file_exists c) then (let d = open_out c in write_default_configuration d; close_out d;);
   let f = open_in c 
