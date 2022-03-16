@@ -42,6 +42,15 @@ type section = Nil (**Nul*)
               | Section of string * section list * int (**A section is a name and the list of all nodes/subsection*)
               | Chap of string * section  list * int
 
+let put_int_into_node i = function
+  | Nil -> Nil
+  | Node(a,b) -> Node(a,b)
+  | Subsubsection(a,b,_) -> Subsubsection(a,b,i)
+  | Subsection(a,b,_) -> Subsection(a,b,i)
+  | Section(a,b,_) -> Section(a,b,i)
+  | Chap(a,b,_) -> Section(a,b,i);;
+
+
 let print_list_of_section section =
   let rec aux result last_index lst = match lst with
     | [] -> result
@@ -62,7 +71,7 @@ let print_list_of_section section =
     | Section(s,sec,i)::l ->
       let results = aux "" last_index sec in
       let last_index = (string_of_int i) in
-      let title = Printf.sprintf "<h3 id=\"%s.%d\">Subsection %s.%d : %s</h3><br>\n" last_index i last_index i (s) in
+      let title = Printf.sprintf "<h3 id=\"%s.%d\">Section %s.%d : %s</h3><br>\n" last_index i last_index i (s) in
       let total = result^title^results in
       aux total (Printf.sprintf "%s.%d" last_index i) l
     | Chap(s,sec,i)::l ->
@@ -138,8 +147,7 @@ let create_subsubsection i str =
   let newline = Str.regexp "\n" in
   let line_list = Str.split newline str
   in let name,rest = extract_name (List.hd line_list) in let name,rest = String.trim name,String.trim rest in
-  let line_list = List.tl line_list
-  in let new_list = rest::(List.tl line_list)
+  let new_list = rest::(List.tl line_list)
   in let tl = List.map (String.trim) new_list
   in let tl = List.filter (fun a -> not (String.equal "" a)) tl
   in let str = String.concat "\n" tl
@@ -150,11 +158,13 @@ let parse_subsubsection str =
   let subsubsection = Str.regexp "\\\\subsubsection" in
   let subsubsection_list = Str.split subsubsection str in
   let subsubsection_list = List.tl subsubsection_list in
-  List.mapi (create_subsubsection) subsubsection_list;;
+  let a = List.map (fun c -> create_subsubsection 0 c) (subsubsection_list)
+  in let a = List.filter (fun c -> not (c=Nil)) a in
+  List.mapi (put_int_into_node) a;;
 
 
 let create_generic func (cons: string * section list * int -> section) i str = 
-  let str = String.trim str in 
+  let str = String.trim str in
   if str = "" then Nil else 
     let newline = Str.regexp "\n"
     in let line_list = Str.split newline str 
@@ -169,18 +179,20 @@ let create_generic func (cons: string * section list * int -> section) i str =
     in let chapter_list = if rest = "" then chapter_list else first_node::chapter_list
     in cons(name,chapter_list,i);;
 
-let parse_generic ?(transform=(fun x -> List.tl x)) regexp func str =
+let parse_generic ?(transform=(fun x -> x)) regexp func str =
   let re = Str.regexp regexp in
   let re_list = Str.split re str in
   let re_list = transform re_list in
-  List.mapi (func) re_list;;
+  let a = List.map (fun c -> func 0 c) (re_list)
+  in let a = List.filter (fun c -> not (c=Nil)) a in
+  List.mapi (put_int_into_node) a;;
 
 let create_subsection = create_generic (parse_subsubsection) (fun (a,b,c) -> Subsection(a,b,c))
 let parse_subsection = parse_generic "\\\\subsection" (create_subsection) 
 let create_section = create_generic (parse_subsection) (fun (a,b,c) -> Section(a,b,c))
 let parse_section = parse_generic "\\\\section" (create_section)
 let create_chapter = create_generic (parse_section) (fun (a,b,c) -> Chap(a,b,c))
-let parse_chapter = parse_generic "\\\\chapter" (create_chapter)
+let parse_chapter = parse_generic ~transform:List.tl "\\\\chapter" (create_chapter)
 
 let replace_generalities str = 
   let newline_regexp = Str.regexp "\\\\newline" 
