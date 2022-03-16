@@ -1,7 +1,6 @@
 (**
 Utilities
 *)
-
 (** A function reading the inputed file and outputs a string of the lines separated by a line break \n
 @param filename the file to read *)
 let read_file filename = 
@@ -52,4 +51,3 @@ let transform_list_of_chars_to_string_without_the_newline lst =
       | "book" -> "book"
       | "article" -> "article"
       | _ -> print_endline "only articles/books are supported"; exit 2;;
-  

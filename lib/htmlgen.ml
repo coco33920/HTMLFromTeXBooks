@@ -114,6 +114,7 @@ let parse_file file =
     | "book" -> parse_chapter str
     | "article" -> parse_chapter str
     | _ -> failwith "only articles books are supported";;
+
 let prepare_body ?(name="TeX Created File") str nodes =
   let t = "<title>"^name^"</title>" in
   let t = String.cat t "<body>\n" in
