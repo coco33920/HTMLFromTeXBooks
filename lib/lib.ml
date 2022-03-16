@@ -98,84 +98,54 @@ let extract_name f =
 
   
 let create_subsubsection i str =
+  let str = String.trim str in 
   if str="" then Nil else
   let newline = Str.regexp "\n" in
   let line_list = Str.split newline str
-  in let name,rest = extract_name (List.hd line_list)
+  in let name,rest = extract_name (List.hd line_list) in let name,rest = String.trim name,String.trim rest in
+  let line_list = List.tl line_list
   in let new_list = rest::(List.tl line_list)
-  in Subsubsection(name,[Node((String.concat "\n" new_list),new_list)],i);;
+  in let tl = List.map (String.trim) new_list
+  in let tl = List.filter (fun a -> not (String.equal "" a)) tl
+  in let str = String.concat "\n" tl
+  in Subsubsection(name,[Node((str),tl)],i);;
 
-let create_generic func (cons: string * section list * int -> section) i str = 
-  if str = "" then Nil else 
-    let newline = Str.regexp "\n"
-    in let line_list = Str.split newline str 
-    in let name,rest = extract_name (List.hd line_list)
-    in let tl = List.tl line_list
-    in let chapter_list = func (String.concat "\n" tl)
-    in let first_node = if rest = "" then Nil else Node(rest,[rest])
-    in let chapter_list = if rest = "" then chapter_list else first_node::chapter_list
-    in cons(name,chapter_list,i);;
-
-let parse_generic regexp func str =
-  let re = Str.regexp regexp in
-  let re_list = Str.split re str in
-  List.mapi (func) re_list;;
 
 let parse_subsubsection str =
   let subsubsection = Str.regexp "\\\\subsubsection" in
   let subsubsection_list = Str.split subsubsection str in
+  let subsubsection_list = List.tl subsubsection_list in
   List.mapi (create_subsubsection) subsubsection_list;;
 
-let create_subsection i str =
-  if str = "" then Nil else 
-  let newline = Str.regexp "\n"  
-  in let line_list = Str.split newline str
-  in let name,rest = (extract_name (List.hd line_list))
-  in let tl = List.tl line_list
-  in let subsubsection_list = parse_subsubsection (String.concat "\n" tl)
-  in let first_node = Node(rest, [rest])
-  in let subsubsection_list = first_node::subsubsection_list
-  in Subsection(name,subsubsection_list,i);;
 
-
-
-let parse_subsection str = 
-  let subsection_regexp = Str.regexp "\\\\subsection" in
-  let subsection_list  = Str.split subsection_regexp str in 
-  List.mapi (create_subsection) subsection_list;;
-
-let create_section i str = 
-  if str = "" then Nil else
-  let newline = Str.regexp "\n"
-  in let line_list = Str.split newline str 
-  in let name,rest = (extract_name (List.hd line_list))
-  in let tl = List.tl line_list
-  in let section_list = parse_subsection (String.concat "\n" tl)
-  in let first_node = Node(rest,[rest])
-  in let section_list = first_node::section_list
-  in Section(name,section_list,i);;
-
-let parse_section str =
-  let section_regexp = Str.regexp "\\\\section" in
-  let section_list = Str.split section_regexp str in
-  List.mapi (create_section) section_list;;
-
-let create_chapter i str = 
+let create_generic func (cons: string * section list * int -> section) i str = 
+  let str = String.trim str in 
   if str = "" then Nil else 
     let newline = Str.regexp "\n"
     in let line_list = Str.split newline str 
-    in let name,rest = extract_name (List.hd line_list)
+    in let name,rest = extract_name (List.hd line_list) in let name,rest = String.trim name,String.trim rest
     in let tl = List.tl line_list
-    in let chapter_list = parse_section (String.concat "\n" tl)
-    in let first_node = Node(rest,[rest])
-    in let chapter_list = first_node::chapter_list
-    in Chap(name,chapter_list,i);;
+    in let chapter_list = func (String.concat "\n" tl)
+    in let tl = List.map (String.trim) tl
+    in let tl = List.filter (fun a -> not (String.equal "" a)) tl
+    in let str = String.concat "\n" tl
+    in let chapter_list = if chapter_list=[] then [Node(str,[str])] else chapter_list 
+    in let first_node = if rest = "" then Nil else Node(rest,[rest])
+    in let chapter_list = if rest = "" then chapter_list else first_node::chapter_list
+    in cons(name,chapter_list,i);;
 
-let parse_chapter str =
-  let chapter_regexp = Str.regexp "\\\\chapter" in
-  let section_list = Str.split chapter_regexp str in
-  let section_list = List.tl section_list in
-  List.mapi (create_chapter) section_list;;
+let parse_generic ?(transform=(fun x -> List.tl x)) regexp func str =
+  let re = Str.regexp regexp in
+  let re_list = Str.split re str in
+  let re_list = transform re_list in
+  List.mapi (func) re_list;;
+
+let create_subsection = create_generic (parse_subsubsection) (fun (a,b,c) -> Subsection(a,b,c))
+let parse_subsection = parse_generic "\\\\subsection" (create_subsection) 
+let create_section = create_generic (parse_subsection) (fun (a,b,c) -> Section(a,b,c))
+let parse_section = parse_generic "\\\\section" (create_section)
+let create_chapter = create_generic (parse_section) (fun (a,b,c) -> Chap(a,b,c))
+let parse_chapter = parse_generic "\\\\chapter" (create_chapter)
 
 
 let parse_file file =
