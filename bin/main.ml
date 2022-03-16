@@ -13,17 +13,13 @@ let spec = [
 ]
 
 let execute_command file outfile start_chapter name =
-  Htmlfromtexbooks.Lib.parse_book (Htmlfromtexbooks.Lib.read_file file) |>
-  List.filteri (fun i _ -> (i>=start_chapter)) |>
-  List.mapi (fun i a -> Htmlfromtexbooks.Lib.extract_chapter a i) |>
-  List.map (Htmlfromtexbooks.Lib.transform_chapter) |>
-  Htmlfromtexbooks.Lib.write_book ~name:name outfile;;
+  Htmlfromtexbooks.Htmlgen.print_file ~start_chapter:start_chapter file outfile name
 
 let parse_filename file outfile start_chapter name = 
   if not (Sys.file_exists file) then (Printf.printf "The %s file do not exists" file; exit 2)
   else execute_command file outfile start_chapter name;;
 
-let write_default_configuration channel = 
+(*let write_default_configuration channel = 
   output_string channel "start_chapter=1\n";
   flush channel;
   output_string channel "name=TeX Generator\n";
@@ -43,7 +39,7 @@ let load_configuration () =
   let f = open_in c 
   in let c = input_line f in let d = input_line f
   in let d,c = (Str.global_replace (Str.regexp "name=") "" d),(Str.global_replace (Str.regexp "start_chapter=") "" c)
-  in d,int_of_string c;;
+  in d,int_of_string c;;*)
 
 
 let detect_a_file () = 
@@ -59,7 +55,7 @@ let detect_a_file () =
 let msg = "htmlfromtex --input <file> --output <out_file> [--use-glossary <glossary> | --name <name> | --start-chapter <chapter>]";;
 let _ =
   Arg.parse spec (fun _ -> ()) msg;
-  let default_name,default_starting_chapter = load_configuration () in
+  (*let default_name,default_starting_chapter = load_configuration () in*)
   if !filename = "" then 
     let a = detect_a_file () in
     if a = "" then (print_string msg; exit 2) else (filename := a);
@@ -71,7 +67,7 @@ let _ =
     Printf.printf "output filename has been automatically generated to be %s\n" !outname;
   else
     Printf.printf "output filename is %s\n" !outname;
-  let chapters = Htmlfromtexbooks.Lib.extract_chapters !filename
+  (*let chapters = Htmlfromtexbooks.Lib.extract_chapters !filename
   in let tbl = Htmlfromtexbooks.Lib.detect_prelude chapters
   in if List.length chapters = 0 then (print_endline "File is empty"; exit 2)
   else
@@ -91,7 +87,7 @@ let _ =
     (start_chapter := default_starting_chapter;
     Printf.printf "Starting chapter have been automatically generated and is %d\n" !start_chapter)
   else
-    Printf.printf "Starting chapter is %d\n" !start_chapter;
+    Printf.printf "Starting chapter is %d\n" !start_chapter;*)
 
-  Htmlfromtexbooks.Lib.init_glossary !glossary_name;
+  Htmlfromtexbooks.Glossary.init_glossary !glossary_name;
   parse_filename !filename !outname !start_chapter !name;;
