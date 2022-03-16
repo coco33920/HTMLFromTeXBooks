@@ -147,11 +147,31 @@ let parse_section = parse_generic "\\\\section" (create_section)
 let create_chapter = create_generic (parse_section) (fun (a,b,c) -> Chap(a,b,c))
 let parse_chapter = parse_generic "\\\\chapter" (create_chapter)
 
+let replace_generalities str = 
+  let newline_regexp = Str.regexp "\\\\newline" 
+  and par_regexp = Str.regexp "\\\\par"
+  and bigskip_regexp = Str.regexp "\\\\bigskip"
+  and doublebackslash_regexp = Str.regexp "\\\\\\\\"
+  and sep_regexp = Str.regexp "\\\\sep"
+  and begin_center_regexp = Str.regexp "\\\\begin{center}"
+  and end_center_regexp = Str.regexp "\\\\end{center}"
+  and end_document_regexp = Str.regexp "\\\\end{document}" 
+  in 
+  Str.global_replace newline_regexp "<br/>\n" @@
+  Str.global_replace par_regexp "<br/>\n" @@
+  Str.global_replace bigskip_regexp "</p>\n\n<p>\n" @@
+  Str.global_replace doublebackslash_regexp "<br>\n" @@
+  Str.global_replace sep_regexp "<br/><div class=\"center\">\n<p>\n<br/><b>***</b><br/>\n</p>\n</div>" @@
+  Str.global_replace begin_center_regexp "<div class=\"center\">\n" @@
+  Str.global_replace end_center_regexp "\n</div>" @@
+  Str.global_replace end_document_regexp "" @@
+  str;;
 
 let parse_file file =
   let a = detect_file_type file in
   let str = read_file file in
   let str = String.concat "\n" str in
+  let str = replace_generalities str in
   match a with
     | "book" -> parse_chapter str
     | "chapters" -> parse_section str
