@@ -86,13 +86,29 @@ let shuffle lst =
   let apply_all_replace str = 
     let textit_regexp = Str.regexp "\\\\textit"
     and textbf_regexp = Str.regexp "\\\\textbf"
+    and url_regexp = Str.regexp "\\\\url" 
+    and href_regexp = Str.regexp "\\\\href"
   in
     let str = Str.global_replace textit_regexp "" str in 
     let str = Str.global_replace textbf_regexp "" str in
+    let str = Str.global_replace url_regexp "" str in
+    let str = Str.global_replace href_regexp "" str in
     str;;  
 
   let see_if_a_char_is_okay str n ch =
     (Char.equal (String.get str (String.length str - n)) (ch))
+
+  let rec parse_urls acc = function
+  | [] -> acc,[]
+  | t::q when t='}' -> acc,q
+  | t::q -> parse_urls (acc^(String.make 1 t)) q
+
+  let rec parse_href (acc1,acc2) r = function
+  | [] -> (acc1,acc2),[]
+  | t::q when t='{' -> parse_href (acc1,acc2) r q
+  | t::q when t='}' && acc1="" -> parse_href (r,"") "" q
+  | t::q when t='}' && acc1<>"" -> (acc1,r),q
+  | t::q -> parse_href (acc1,acc2) (r^(String.make 1 t)) q
 
   let execute node_list = 
     let stack = Stack.create () in
@@ -103,6 +119,12 @@ let shuffle lst =
             -> Stack.push "</i>" stack; aux t (result^"<i>") q
         | t::q when t='{' && last_char='f' && see_if_a_char_is_okay result 2 'b' (*\textbf*)
             -> Stack.push "</b>" stack; aux t (result^"<b>") q
+        | t::q when t='{' && last_char = 'f' && see_if_a_char_is_okay result 2 'e'
+            -> let (url,name),q = parse_href ("","") "" q in
+              let a = Printf.sprintf "<a href=\"%s\">%s</a>" url name in aux t (result^a) q
+        | t::q when t='{' && last_char='l' 
+            -> let url,q = parse_urls "" q 
+                in let a = Printf.sprintf "<a href=\"%s\">%s</a>" url url in aux t (result^a) q
         | t::q when t='}' 
             -> if Stack.is_empty stack then (aux t (result^"}") q) 
               else let p = Stack.pop stack 
@@ -256,6 +278,9 @@ let replace_generalities str =
   and begin_center_regexp = Str.regexp "\\\\begin{center}"
   and end_center_regexp = Str.regexp "\\\\end{center}"
   and end_document_regexp = Str.regexp "\\\\end{document}" 
+  and begin_itemize_regexp = Str.regexp "\\\\begin{itemize}"
+  and end_itemize_regexp = Str.regexp "\\\\end{itemize}"
+  and item_regexp = Str.regexp "\\\\item"
   in 
   Str.global_replace newline_regexp "<br/>\n" @@
   Str.global_replace par_regexp "<br/>\n" @@
@@ -265,6 +290,9 @@ let replace_generalities str =
   Str.global_replace begin_center_regexp "<div class=\"center\">\n" @@
   Str.global_replace end_center_regexp "\n</div>" @@
   Str.global_replace end_document_regexp "" @@
+  Str.global_replace begin_itemize_regexp "<br>\n" @@
+  Str.global_replace end_itemize_regexp "" @@ 
+  Str.global_replace item_regexp "  " @@
   str;;
 
 let parse_file file =
