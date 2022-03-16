@@ -18,23 +18,23 @@ let parse_glossary_entry entry =
   and desc_regexp = Str.regexp "description=" 
   and accolade_fermante_regexp = Str.regexp "}" 
   and accolade_ouvrante_regexp = Str.regexp "{" in
-    let rec read_desc acc = function
-      | [] -> acc,[]
-      | t::q when t='{' -> read_desc acc q
-      | t::q when t='}' -> acc,q
-      | t::q -> read_desc (acc^(String.make 1 t)) q 
-    and read_name acc = function
-      | [] -> acc,[]
-      | t::q when t='{' -> read_name acc q
-      | t::q when t='}' -> acc,q
-      | t::q when t=',' -> acc,q
-      | t::q -> read_name (acc^(String.make 1 t)) q
-    and read_def acc = function
-      | [] -> acc,[]
-      | t::q when t='{' -> read_def acc q 
-      | t::_ when t='}' -> acc,[]
-      | t::q -> read_def (acc^(String.make 1 t)) q
-    and s = fun (s) -> String.sub s 1 (String.length s -1)
+  let rec read_desc acc = function
+    | [] -> acc,[]
+    | t::q when t='{' -> read_desc acc q
+    | t::q when t='}' -> acc,q
+    | t::q -> read_desc (acc^(String.make 1 t)) q 
+  and read_name acc = function
+    | [] -> acc,[]
+    | t::q when t='{' -> read_name acc q
+    | t::q when t='}' -> acc,q
+    | t::q when t=',' -> acc,q
+    | t::q -> read_name (acc^(String.make 1 t)) q
+  and read_def acc = function
+    | [] -> acc,[]
+    | t::q when t='{' -> read_def acc q 
+    | t::_ when t='}' -> acc,[]
+    | t::q -> read_def (acc^(String.make 1 t)) q
+  and s = fun (s) -> String.sub s 1 (String.length s -1)
   in let not_comma_then_s = fun t -> t |> s |> String.trim
   in let a,q = read_desc "" (Utils.string_to_list entry) 
   in let b,q2 = read_name "" q
@@ -42,9 +42,9 @@ let parse_glossary_entry entry =
   in let a = [a;b;c]
   in let a = List.map (fun c -> Str.global_replace accolade_ouvrante_regexp "" (Str.global_replace accolade_fermante_regexp "" c)) a 
   in match a with
-    | a::b::c::[] -> let a,b,c = (a,Str.global_replace name_regexp "" b, Str.global_replace desc_regexp "" c) in
-                    Hashtbl.add glossaries a ((not_comma_then_s b), (not_comma_then_s c))
-    | _ -> ();;
+  | a::b::c::[] -> let a,b,c = (a,Str.global_replace name_regexp "" b, Str.global_replace desc_regexp "" c) in
+    Hashtbl.add glossaries a ((not_comma_then_s b), (not_comma_then_s c))
+  | _ -> ();;
 
 (** Takes a glossary file and parse it in a list of string *)
 let parse_glossaries file = 
@@ -55,13 +55,13 @@ let parse_glossaries file =
     let string = Utils.read_file file in
     let string = String.concat "\n" string in
     let list_of_entries = Str.split glossary_regexp string |> List.filter (not_is_empty)
-    |> List.map (Str.global_replace newline_regexp "") in
+                          |> List.map (Str.global_replace newline_regexp "") in
     list_of_entries;; 
 
 let init_glossary glossary = 
   Hashtbl.clear glossaries;
   parse_glossaries glossary |> List.iter (parse_glossary_entry);;
-  
+
 (** Combines parse_glosaries and parse_glossary_entry *)
 let total_glossaries file = 
   parse_glossaries file 
@@ -74,13 +74,13 @@ let prints_glossary () =
   let line = line^"<h2>Glossary</h2>" in
   let rec aux result (entries) = 
     match entries with
-      | [] -> result
-      | (desc,(name,def))::q -> let l = "\t<div id=\"" ^ desc ^ "\">\n\t\t<h3>" ^ name ^ "</h3>\n\t\t<p>" ^ def ^ "</p>\n\t</div>\n"
-                                  in aux (result^l) q
+    | [] -> result
+    | (desc,(name,def))::q -> let l = "\t<div id=\"" ^ desc ^ "\">\n\t\t<h3>" ^ name ^ "</h3>\n\t\t<p>" ^ def ^ "</p>\n\t</div>\n"
+      in aux (result^l) q
   in let line = aux line (List.of_seq (Hashtbl.to_seq glossaries))
   in line^"</div>\n";; 
 
-  (** takes the char list and returns the (name,description) of the given glossary entry and the remaining of the list *)
+(** takes the char list and returns the (name,description) of the given glossary entry and the remaining of the list *)
 let recognize_gls lst = 
   let rec aux acc lst = match lst with
     | [] -> acc,[]
