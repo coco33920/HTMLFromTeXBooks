@@ -71,14 +71,14 @@ let total_glossaries file =
 (** Transform the glossary to an HTML file *)
 let prints_glossary () =
   let line = "<div id=\"glossary\"><br>\n>" in
-  let line = String.cat line "<h2>Glossary</h2>" in
+  let line = line^"<h2>Glossary</h2>" in
   let rec aux result (entries) = 
     match entries with
       | [] -> result
       | (desc,(name,def))::q -> let l = "\t<div id=\"" ^ desc ^ "\">\n\t\t<h3>" ^ name ^ "</h3>\n\t\t<p>" ^ def ^ "</p>\n\t</div>\n"
-                                  in aux (String.cat result l) q
+                                  in aux (result^l) q
   in let line = aux line (List.of_seq (Hashtbl.to_seq glossaries))
-  in String.cat line "</div>\n";; 
+  in line^"</div>\n";; 
 
   (** takes the char list and returns the (name,description) of the given glossary entry and the remaining of the list *)
 let recognize_gls lst = 

@@ -1,6 +1,11 @@
 (**
 Utilities
 *)
+
+let string_starts_with prefix str =
+  if String.length prefix > String.length str then false else 
+  let a = String.sub str 0 (String.length prefix) in String.equal a prefix;;
+
 (** A function reading the inputed file and outputs a string of the lines separated by a line break \n
 @param filename the file to read *)
 let read_file filename = 
@@ -8,7 +13,7 @@ let read_file filename =
   let chan = open_in filename in
   try
     while true; do
-      let a = input_line chan in if not (String.starts_with ~prefix:"//" a) then lines := a :: !lines
+      let a = input_line chan in if not (string_starts_with "//" a) then lines := a :: !lines
     done; !lines
   with End_of_file ->
     close_in chan;

@@ -95,7 +95,7 @@ let print_list_of_section ?(start_chapter=1) section =
   in (aux "<div class=\"center\"><ul><br>\n" section)^("</ul></div>\n")
     
 let extract_name f = 
-  if not ((String.starts_with ~prefix:"{" f) || String.starts_with ~prefix:"*{" f) then "",f else 
+  if not ((Utils.string_starts_with "{" f) || Utils.string_starts_with "*{" f) then "",f else 
   let rec read_name result lst = 
     match lst with
       | [] -> result,[]
@@ -166,11 +166,11 @@ let detect_prelude fichier =
   in let rec detect lst =
   match lst with 
     | [] -> tbl
-    | t::q when (String.starts_with ~prefix:"\\input{" t) ->
+    | t::q when (Utils.string_starts_with "\\input{" t) ->
         let n = extract_name "" (Utils.string_to_list t) 
         in let n = Str.global_replace (Str.regexp "\\\\input{") "" n  
         in Hashtbl.add tbl "gloss" n; detect q
-    | t::q when (String.starts_with ~prefix:"\\title{" t) -> 
+    | t::q when (Utils.string_starts_with "\\title{" t) -> 
         let n = extract_name "" (Utils.string_to_list t) 
         in let n = Str.global_replace (Str.regexp "\\\\title{") "" n
         in let n = Str.global_replace (Str.regexp "\\\\\\\\") ":" n 

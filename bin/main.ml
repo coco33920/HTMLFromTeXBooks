@@ -42,12 +42,21 @@ let load_configuration () =
   in d,int_of_string c;;
 
 
+let find_opt (a : 'a -> bool) (arr: 'a array)  = 
+  let arr = Array.to_list arr in
+  let rec find l = 
+    match l with
+      | [] -> None 
+      | t::_ when a t = true -> Some t
+      | _::q -> find q
+  in find arr;;
+
 let detect_a_file () = 
   let a = Sys.readdir "."
   |> Array.map (fun a -> if a="glossary.tex" then "" else a) 
   |> Array.map (Filename.extension)
   |> Array.mapi (fun i a -> if String.equal a ".tex" then i else -1) 
-  |> Array.find_opt (fun i -> not(i=(-1)))
+  |> find_opt (fun i -> not(i=(-1)))
   in match a with
     | None -> ""
     | Some v -> (Sys.readdir ".").(v);; 

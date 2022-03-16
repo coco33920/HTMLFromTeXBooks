@@ -117,13 +117,13 @@ let parse_file file =
 
 let prepare_body ?(name="TeX Created File") str nodes =
   let t = "<title>"^name^"</title>" in
-  let t = String.cat t "<body>\n" in
-  let t = String.cat t "<style>\n .center { \n margin:auto; \n text-align: center; \n } \n </style>" in
-  let t = String.cat t "<h1 id=\"title\" class=\"center\">"^name^"</h1>\n\n" in
-  let t = String.cat t (Parser.print_table_of_content nodes) in 
-  let t = String.cat t str in
-  let t = String.cat t (Glossary.prints_glossary ()) in
-  let t = String.cat t "</body>" in
+  let t =  t^"<body>\n" in
+  let t =  t^"<style>\n .center { \n margin:auto; \n text-align: center; \n } \n </style>" in
+  let t =  t^"<h1 id=\"title\" class=\"center\">"^name^"</h1>\n\n" in
+  let t =  t^(Parser.print_table_of_content nodes) in 
+  let t =  t^str in
+  let t =  t^(Glossary.prints_glossary ()) in
+  let t =  t^"</body>" in
   t;;
 
 let print_file ?(start_chapter=1) filename outfile name = 
