@@ -37,6 +37,7 @@ Type declaration and aliases useful
 (**Type representing a section*)
 type section = Nil (**Nul*)
               | Node of string * string list  (**Node: a node is a string, the text of the node, text list *)
+              | BigNode of section list
               | Subsubsection of string * section list * int
               | Subsection of string * section list * int (**Subsection: a subsection is the subsection of a text*)
               | Section of string * section list * int (**A section is a name and the list of all nodes/subsection*)
@@ -48,14 +49,33 @@ let put_int_into_node i = function
   | Subsubsection(a,b,_) -> Subsubsection(a,b,i)
   | Subsection(a,b,_) -> Subsection(a,b,i)
   | Section(a,b,_) -> Section(a,b,i)
-  | Chap(a,b,_) -> Section(a,b,i);;
+  | BigNode(a) -> BigNode(a)
+  | Chap(a,b,_) -> Chap(a,b,i);;
 
+let rec expand a lst = 
+  match a with
+    | [] -> lst
+    | t::q -> expand q (t::lst);;
+
+let shuffle lst = 
+  let rec redistribute i acc lst = match lst with
+    | [] -> acc
+    | Nil::q -> redistribute i acc q
+    | Node(a,b)::q -> redistribute i (Node(a,b)::acc) q
+    | Subsubsection(a,b,_)::q -> redistribute (i+1) (Subsubsection(a,b,i)::acc) q
+    | Subsection(a,b,_)::q -> redistribute (i+1) (Subsection(a,b,i)::acc) q
+    | Section(a,b,_)::q -> redistribute (i+1) (Section(a,b,i)::acc) q
+    | Chap(a,b,_)::q -> redistribute (i+1) (Chap(a,b,i)::acc) q
+    | BigNode(a)::q -> redistribute (i) (expand (a) acc) q
+  in List.rev (redistribute 0 [] lst);;
+  
 
 let print_list_of_section section =
   let rec aux result last_index lst = match lst with
     | [] -> result
     | Nil::q -> aux result last_index q
     | Node(s,_)::l -> aux (result^Printf.sprintf "%s\n" s) last_index l
+    | BigNode(a)::q -> let r = aux "" "" a in  aux (result^r) last_index q
     | Subsubsection(s,sec,i)::l -> 
         let results = aux "" last_index sec in 
         let last_index = (string_of_int i) in
@@ -126,6 +146,7 @@ let detect_file_type file =
     | _ -> print_endline "only articles/books are supported"; exit 2;;
 
 let extract_name f = 
+  if not ((String.starts_with ~prefix:"{" f) || String.starts_with ~prefix:"*{" f) then "",f else 
   let rec read_name result lst = 
     match lst with
       | [] -> result,[]
@@ -158,9 +179,10 @@ let parse_subsubsection str =
   let subsubsection = Str.regexp "\\\\subsubsection" in
   let subsubsection_list = Str.split subsubsection str in
   let subsubsection_list = List.tl subsubsection_list in
-  let a = List.map (fun c -> create_subsubsection 0 c) (subsubsection_list)
-  in let a = List.filter (fun c -> not (c=Nil)) a in
-  List.mapi (put_int_into_node) a;;
+  let a = List.map (fun c -> create_subsubsection 0 c) (subsubsection_list) in
+  shuffle a;;
+  (*in let a = List.filter (fun c -> not (c=Nil)) a in
+  List.mapi (put_int_into_node) a;;*)
 
 
 let create_generic func (cons: string * section list * int -> section) i str = 
@@ -177,15 +199,14 @@ let create_generic func (cons: string * section list * int -> section) i str =
     in let chapter_list = if chapter_list=[] then [Node(str,[str])] else chapter_list 
     in let first_node = if rest = "" then Nil else Node(rest,[rest])
     in let chapter_list = if rest = "" then chapter_list else first_node::chapter_list
-    in cons(name,chapter_list,i);;
+    in if name="" then BigNode(chapter_list) else cons(name,chapter_list,i);;
 
 let parse_generic ?(transform=(fun x -> x)) regexp func str =
   let re = Str.regexp regexp in
   let re_list = Str.split re str in
   let re_list = transform re_list in
   let a = List.map (fun c -> func 0 c) (re_list)
-  in let a = List.filter (fun c -> not (c=Nil)) a in
-  List.mapi (put_int_into_node) a;;
+    in shuffle a;;
 
 let create_subsection = create_generic (parse_subsubsection) (fun (a,b,c) -> Subsection(a,b,c))
 let parse_subsection = parse_generic "\\\\subsection" (create_subsection) 
