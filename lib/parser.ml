@@ -178,6 +178,7 @@ let detect_prelude fichier =
     | _::q -> detect q
   in detect line_list;;
 
+  
 
 let create_subsection = create_generic (parse_subsubsection) (fun (a,b,c) -> Subsection(a,b,c))
 let parse_subsection = parse_generic "\\\\subsection" (create_subsection) 
