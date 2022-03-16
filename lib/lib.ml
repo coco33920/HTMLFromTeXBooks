@@ -33,6 +33,7 @@ let write_to_file file str =
 Type declaration and aliases useful
 *)
 
+let list_of_string str = List.of_seq (String.to_seq str)
 
 (**Type representing a section*)
 type section = Nil (**Nul*)
@@ -42,6 +43,10 @@ type section = Nil (**Nul*)
               | Subsection of string * section list * int (**Subsection: a subsection is the subsection of a text*)
               | Section of string * section list * int (**A section is a name and the list of all nodes/subsection*)
               | Chap of string * section  list * int
+
+(** Glossary type : It can be a Nil or an "Entry" : a tuple of a string (the key), a string (the name) and a string (the definition) *)
+type glossary = Nul | Entry of string * string * string;;
+
 
 let put_int_into_node i = function
   | Nil -> Nil
@@ -69,6 +74,55 @@ let shuffle lst =
     | BigNode(a)::q -> redistribute (i) (expand (a) acc) q
   in List.rev (redistribute 0 [] lst);;
   
+  let transform_list_of_chars_to_string_without_the_newline lst =
+    let rec aux acc l =
+      match l with 
+        | [] -> acc
+        | t::q when t='\n' -> aux acc q (*UNIX*)
+        | t::q when t='\r' -> aux acc q (*WINDOWS*)
+        | t::q -> print_int (Char.code t); print_newline (); aux (acc ^ (String.make 1 t)) q
+    in aux "" lst;;
+
+  let apply_all_replace str = 
+    let textit_regexp = Str.regexp "\\\\textit"
+    and textbf_regexp = Str.regexp "\\\\textbf"
+  in
+    let str = Str.global_replace textit_regexp "" str in 
+    let str = Str.global_replace textbf_regexp "" str in
+    str;;  
+
+  let see_if_a_char_is_okay str n ch =
+    (Char.equal (String.get str (String.length str - n)) (ch))
+
+  let execute node_list = 
+    let stack = Stack.create () in
+    let rec aux last_char result lst = 
+      match lst with
+        | [] -> apply_all_replace result
+        | t::q when t='{' && last_char='t' (*\textit*)
+            -> Stack.push "</i>" stack; aux t (result^"<i>") q
+        | t::q when t='{' && last_char='f' && see_if_a_char_is_okay result 2 'b' (*\textbf*)
+            -> Stack.push "</b>" stack; aux t (result^"<b>") q
+        | t::q when t='}' 
+            -> if Stack.is_empty stack then (aux t (result^"}") q) 
+              else let p = Stack.pop stack 
+              in aux t (result^p) q
+        | t::q -> aux t (result^(String.make 1 t)) q;
+    in let analyze str = aux ' ' " " (list_of_string str)
+    in let rec analyze_node node_list = match node_list with
+        | [] -> []
+        | Nil::q -> analyze_node q 
+        | Subsection(name,list,i)::q -> Subsection((analyze name),List.rev (analyze_node list),i)::(analyze_node q) 
+        | Section(name,list,i)::q -> Section((analyze name),List.rev(analyze_node list),i)::(analyze_node q)
+        | Subsubsection(name,list,i)::q -> Subsubsection((analyze name),List.rev(analyze_node list),i)::(analyze_node q)
+        | Chap(name,list,i)::q -> Chap((analyze name),List.rev(analyze_node list), i)::(analyze_node q)
+        | Node(str,_)::q -> 
+          let str = analyze str 
+          in let str_l = Str.split (Str.regexp "\n") str
+          in Node(str,str_l)::(analyze_node q)
+        | BigNode(_)::q -> analyze_node q
+    in analyze_node (analyze_node node_list);;
+
 
 let print_list_of_section section =
   let rec aux result last_index lst = match lst with
@@ -102,28 +156,6 @@ let print_list_of_section section =
       aux total (string_of_int i) l
   in aux "" "" section 
     
-
-
-
-(** Chapter type : A chapter is Nil Or A tuple of a string (name), a string (the chapter text) 
-a string list (the lines of chapter text) and an integer (the number of the chapter) *)
-type chapter = Nill | Chap of string * section list * int
-
-(** Glossary type : It can be a Nil or an "Entry" : a tuple of a string (the key), a string (the name) and a string (the definition) *)
-type glossary = Nul | Entry of string * string * string;;
-
-(** Alias : a book is a list of chapters *)
-type book = chapter list;;
-
-
-(*
-Parse a book into a list of chapters
-Parse each chapters into a list of section
-Parse each section into a list of subsection
-Parse each subsection into a list of subsubsection
-Construct the AST
-*)
-
 let string_to_list = fun c -> List.of_seq (String.to_seq c);;
 let list_to_string list = String.of_seq (List.to_seq list)
 
