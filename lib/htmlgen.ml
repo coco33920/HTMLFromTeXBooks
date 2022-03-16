@@ -38,6 +38,7 @@ let list_of_string str = List.of_seq (String.to_seq str)
   | t::q when t='}' && acc1<>"" -> (acc1,r),q
   | t::q -> parse_href (acc1,acc2) (r^(String.make 1 t)) q
 
+
   let execute node_list = 
     let stack = Stack.create () in
     let rec aux last_char result lst = 
