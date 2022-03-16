@@ -56,7 +56,7 @@ let list_of_string str = List.of_seq (String.to_seq str)
         | t::q when t='{' && last_char='s' (*\gls*)
             -> if Glossary.glossary_provided () then 
             let (name,_),desc,l = Glossary.recognize_gls q
-            in let a = Printf.sprintf "<a href=\"%s\">%s</a>" desc name
+            in let a = Printf.sprintf "<a href=\"#%s\">%s</a>" desc name
             in aux '{' (result^a) l else aux '{' (result^"}") q
         | t::q when t='}' 
             -> if Stack.is_empty stack then (aux t (result^"}") q) 
@@ -114,12 +114,12 @@ let parse_file file =
     | "book" -> parse_chapter str
     | "article" -> parse_chapter str
     | _ -> failwith "only articles books are supported";;
-let prepare_body ?(name="TeX Created File") str =
+let prepare_body ?(name="TeX Created File") str nodes =
   let t = "<title>"^name^"</title>" in
   let t = String.cat t "<body>\n" in
   let t = String.cat t "<style>\n .center { \n margin:auto; \n text-align: center; \n } \n </style>" in
   let t = String.cat t "<h1 id=\"title\" class=\"center\">"^name^"</h1>\n\n" in
-  (*let t = String.cat t (print_table_of_content chapter) in *)
+  let t = String.cat t (Parser.print_table_of_content nodes) in 
   let t = String.cat t str in
   let t = String.cat t (Glossary.prints_glossary ()) in
   let t = String.cat t "</body>" in
@@ -129,5 +129,5 @@ let print_file ?(start_chapter=1) filename outfile name =
   let file = parse_file filename in
   let file = execute file in
   let c = print_list_of_section ~start_chapter:start_chapter file in
-  let c = prepare_body ~name:name c in
+  let c = prepare_body ~name:name c file in
   Utils.write_to_file outfile c;;

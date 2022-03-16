@@ -19,7 +19,7 @@ let parse_filename file outfile start_chapter name =
   if not (Sys.file_exists file) then (Printf.printf "The %s file do not exists" file; exit 2)
   else execute_command file outfile start_chapter name;;
 
-(*let write_default_configuration channel = 
+let write_default_configuration channel = 
   output_string channel "start_chapter=1\n";
   flush channel;
   output_string channel "name=TeX Generator\n";
@@ -39,7 +39,7 @@ let load_configuration () =
   let f = open_in c 
   in let c = input_line f in let d = input_line f
   in let d,c = (Str.global_replace (Str.regexp "name=") "" d),(Str.global_replace (Str.regexp "start_chapter=") "" c)
-  in d,int_of_string c;;*)
+  in d,int_of_string c;;
 
 
 let detect_a_file () = 
@@ -55,7 +55,6 @@ let detect_a_file () =
 let msg = "htmlfromtex --input <file> --output <out_file> [--use-glossary <glossary> | --name <name> | --start-chapter <chapter>]";;
 let _ =
   Arg.parse spec (fun _ -> ()) msg;
-  (*let default_name,default_starting_chapter = load_configuration () in*)
   if !filename = "" then 
     let a = detect_a_file () in
     if a = "" then (print_string msg; exit 2) else (filename := a);
@@ -67,9 +66,9 @@ let _ =
     Printf.printf "output filename has been automatically generated to be %s\n" !outname;
   else
     Printf.printf "output filename is %s\n" !outname;
-  (*let chapters = Htmlfromtexbooks.Lib.extract_chapters !filename
-  in let tbl = Htmlfromtexbooks.Lib.detect_prelude chapters
-  in if List.length chapters = 0 then (print_endline "File is empty"; exit 2)
+  in let tbl = Htmlfromtexbooks.Parser.detect_prelude !filename
+  in if String.trim (String.concat "" (Htmlfromtexbooks.Utils.read_file !filename)) = "" 
+    then (print_endline "File is empty"; exit 2 |> ignore;)
   else
     if !glossary_name = "" then
       let a = try Hashtbl.find tbl "gloss" with _ -> "" in
@@ -77,6 +76,7 @@ let _ =
       Printf.printf "Glossary have been extracted from the file and is %s\n" !glossary_name;
   else
     Printf.printf "Glossary filename is %s\n" !glossary_name;
+  let default_name,default_starting_chapter = load_configuration () in
   if !name = "" then
     let n = try Hashtbl.find tbl "title" with _ -> default_name in
     name := n;
@@ -87,7 +87,7 @@ let _ =
     (start_chapter := default_starting_chapter;
     Printf.printf "Starting chapter have been automatically generated and is %d\n" !start_chapter)
   else
-    Printf.printf "Starting chapter is %d\n" !start_chapter;*)
+    Printf.printf "Starting chapter is %d\n" !start_chapter;
 
   Htmlfromtexbooks.Glossary.init_glossary !glossary_name;
   parse_filename !filename !outname !start_chapter !name;;

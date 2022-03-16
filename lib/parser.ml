@@ -1,4 +1,3 @@
-
 (**Type representing a section*)
 type section = Nil (**Nul*)
               | Node of string * string list  (**Node: a node is a string, the text of the node, text list *)
@@ -40,37 +39,60 @@ let shuffle lst =
 
 
 let print_list_of_section ?(start_chapter=1) section =
-  let rec aux result last_index lst = match lst with
+  let rec aux result lst = match lst with
     | [] -> result
-    | Nil::q -> aux result last_index q
-    | Node(s,_)::l -> aux (result^Printf.sprintf "%s\n" s) last_index l
-    | BigNode(a)::q -> let r = aux "" "" a in  aux (result^r) last_index q
+    | Nil::q -> aux result q
+    | Node(s,_)::l -> aux (result^Printf.sprintf "%s\n" s) l
+    | BigNode(a)::q -> let r = aux "" a in  aux (result^r) q
     | Subsubsection(s,sec,i)::l -> 
-        let results = aux "" last_index sec in 
-        let last_index = (string_of_int i) in
-        let title = Printf.sprintf "<h4 id=\"%s.%d\">Subsubsection %s.%d : %s</h4><br>\n" last_index i last_index i (s) in
+        let results = aux "" sec in 
+        let title = Printf.sprintf "<h4 id=\"%d\">Subsubsection %d : %s</h4><br>\n" (i+1_000_000_000) i (String.trim(s)) in
         let total = result^title^results in
-        aux total (Printf.sprintf "%s.%d" last_index i) l
+        aux total l
     | Subsection(s,sec,i)::l ->
-      let results = aux "" last_index sec in 
-      let last_index = (string_of_int i) in
-      let title = Printf.sprintf "<h3 id=\"%s.%d\">Subsection %s.%d : %s</h3><br>\n" last_index i last_index i (s) in
+      let results = aux "" sec in 
+      let title = Printf.sprintf "<h3 id=\"%d\">Subsection %d : %s</h3><br>\n" (i+1_000_000) i (String.trim((s))) in
       let total = result^title^results in
-      aux total (Printf.sprintf "%s.%d" last_index i) l
+      aux total l
     | Section(s,sec,i)::l ->
-      let results = aux "" last_index sec in
-      let last_index = (string_of_int i) in
-      let title = Printf.sprintf "<h3 id=\"%s.%d\">Section %s.%d : %s</h3><br>\n" last_index i last_index i (s) in
+      let results = aux "" sec in
+      let title = Printf.sprintf "<h3 id=\"%d\">Section %d : %s</h3><br>\n" (i+1000) i (String.trim(s)) in
       let total = result^title^results in
-      aux total (Printf.sprintf "%s.%d" last_index i) l
+      aux total l
     | Chap(s,sec,i)::l when i>=start_chapter->
-      let results = aux "" last_index sec in 
-      let last_index = (string_of_int i) in
-      let title = Printf.sprintf "<h1 id=\"%s\">Chapter %d : %s </h1><br>\n" last_index i s in
+      let results = aux "" sec in 
+      let title = Printf.sprintf "<h1 id=\"%d\">Chapter %d : %s </h1><br>\n"  i i (String.trim(s)) in
       let total = result^title^results in
-      aux total (string_of_int i) l
-    | _::l -> aux result last_index l
-  in aux "" "" section;;
+      aux total l
+    | _::l -> aux result l
+  in aux "" section;;
+
+
+  let print_table_of_content ?(start_chapter=1) section = 
+    let rec aux result lst = match lst with
+      | [] -> result
+      | Nil::q -> aux result q
+      | Node(_,_)::q -> aux result q
+      | Subsubsection(name,_,i)::l ->
+        let title = Printf.sprintf "<li><a href=\"#%d\"><b>Subsubsection %d : %s</b></a></li>\n" (i+1_000_000_000) (i) name in
+        aux (result^title) l
+      | Subsection(name,list_of_subsubsection,i)::l -> 
+        let title = Printf.sprintf "<li><a href=\"#%d\"><b>Subsection %d : %s<b></a></li>\n<ul>" (i+1_000_000) (i) name  in 
+        let title = title ^ (aux "" list_of_subsubsection) in
+        let title = title ^ "</ul>\n"
+        in aux (result^title) l
+      | Section(name,list_of_sections,i)::l -> 
+        let title = Printf.sprintf "<li><a href=\"#%d\"><b>Section %d : %s</b></a></li>\n<ul>" (i+1000) (i) name in
+        let title = title ^ (aux "" list_of_sections) in
+        let title = title ^ "</ul>\n"
+        in aux (result^title) l
+      | Chap(name,list_of_sections,i)::l when i>=start_chapter ->
+        let title = Printf.sprintf "<li><a href=\"#%d\"><b>Chapter %d : %s</h2></b></a></li>\n<ul>" (i) (i) name in
+        let title = title ^ (aux "" list_of_sections) in
+        let title = title ^ "</ul>\n" in
+        aux (result^title) l 
+      | _::q -> aux result q
+  in (aux "<div class=\"center\"><ul><br>\n" section)^("</ul></div>\n")
     
 let extract_name f = 
   if not ((String.starts_with ~prefix:"{" f) || String.starts_with ~prefix:"*{" f) then "",f else 
@@ -129,6 +151,32 @@ let parse_generic ?(transform=(fun x -> x)) regexp func str =
   let re_list = transform re_list in
   let a = List.map (fun c -> func 0 c) (re_list)
     in shuffle a;;
+
+(**Automatic detection of Glossary*)
+let detect_prelude fichier =
+  let str = String.concat "\n" (Utils.read_file fichier) in
+  let first = Str.split (Str.regexp "\\\\begin{document}") str |> List.hd in
+  let tbl = Hashtbl.create 1 in
+  let line_list = Str.split (Str.regexp "\n") first in
+  let rec extract_name result list = 
+    match list with
+      | [] -> result
+      | t::_ when t='}' -> result
+      | t::q -> extract_name (result^(String.make 1 t)) q
+  in let rec detect lst =
+  match lst with 
+    | [] -> tbl
+    | t::q when (String.starts_with ~prefix:"\\input{" t) ->
+        let n = extract_name "" (Utils.string_to_list t) 
+        in let n = Str.global_replace (Str.regexp "\\\\input{") "" n  
+        in Hashtbl.add tbl "gloss" n; detect q
+    | t::q when (String.starts_with ~prefix:"\\title{" t) -> 
+        let n = extract_name "" (Utils.string_to_list t) 
+        in let n = Str.global_replace (Str.regexp "\\\\title{") "" n
+        in let n = Str.global_replace (Str.regexp "\\\\\\\\") ":" n 
+        in Hashtbl.add tbl "title" n; detect q
+    | _::q -> detect q
+  in detect line_list;;
 
 
 let create_subsection = create_generic (parse_subsubsection) (fun (a,b,c) -> Subsection(a,b,c))
