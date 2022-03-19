@@ -4,17 +4,17 @@ type cmd =
   | SimpleCmd of string * string
   | MultipleCmd of string * string list
 type structure = 
-  | Nul
-  | Line of string
-  | Cmd of cmd 
-  | AtomicCmd of string
-  | OneArgCmd of string * structure list
+  | Nul (*OK*)
+  | Line of string (*OK*)
+  | Cmd of cmd  (*OK*)
+  | AtomicCmd of string (*OK*)
+  | OneArgCmd of string * structure list 
   | MultipleArgCmd of string * structure list list
-  | Env of string * structure list
-  | Subsubsection of string * structure
-  | Subsection of string * structure
-  | Section of string * structure
-  | Chapter of string * structure
+  | Env of string * structure list (*OK*)
+  | Subsubsection of string * structure list
+  | Subsection of string * structure list 
+  | Section of string * structure list 
+  | Chapter of string * structure list 
   | Document of structure
   | Preamble of structure
 type ast = 
@@ -110,8 +110,60 @@ let separate_preamble lst =
       | [] -> List.rev a0,List.rev a1 
   in iter lst [] [];;
  
+let calculate_environments lst =
+  let rec extract_env acc lst = 
+    match lst with 
+      | [] -> acc,[]
+      | (OneArgCmd (s,(Line s1)::_))::q when (String.equal s "begin") ->
+        let env,l = extract_env [] q in 
+        let env = Env (s1,List.rev env) in
+        extract_env (env::acc) l
+      | (OneArgCmd (s,_))::q when (String.equal s "end") -> acc,q
+      | e::q -> extract_env (e::acc) q
+  in let a,_ = extract_env [] lst in a;;
 
+let separate_sections lst = 
+  let tab = [|false;false;false;false|] in
+  let rec extract_section acc lst = 
+    match lst with 
+      | [] -> acc,[]
+      | (OneArgCmd (s,(Line s1)::_))::q when (s="chapter" || s="chapter*")  -> 
+        if tab.(0) = true then (tab.(0) <- false; acc,(OneArgCmd (s,(Line s1)::[]))::q)
+        else
+          let a,l = extract_section [] q in
+          let chap = Chapter(s1,List.rev a) in
+          tab.(0) <- true;
+          extract_section (chap::acc) l
+      | (OneArgCmd (s,(Line s1)::_))::q when (s="section" || s="section*")  -> 
+        if tab.(1) = true then (tab.(1) <- false; acc,(OneArgCmd (s,(Line s1)::[]))::q)
+        else
+          let a,l = extract_section [] q in
+          let chap = Section(s1,List.rev a) in
+          tab.(1) <- true;
+          extract_section (chap::acc) l
+      | (OneArgCmd (s,(Line s1)::_))::q when (s="subsection" || s="subsection*") -> 
+        if tab.(2) = true then (tab.(2) <- false; acc,(OneArgCmd (s,(Line s1)::[]))::q)
+        else
+          let a,l = extract_section [] q in
+          let chap = Subsection(s1,List.rev a) in
+          tab.(2) <- true;
+          extract_section (chap::acc) l
+      | (OneArgCmd (s,(Line s1)::_))::q when (s="subsubsection" || s="subsubsection*")  -> 
+        if tab.(3) = true then (tab.(3) <- false; acc,(OneArgCmd (s,(Line s1)::[]))::q)
+        else
+          let a,l = extract_section [] q in
+          let chap = Subsubsection(s1,List.rev a) in
+          tab.(3) <- true;
+          extract_section (chap::acc) l
+      | e::q -> extract_section (e::acc) q
+  in let a,_ = extract_section [] lst in a;;
+    
+    
+       
 let pre_parse_file file = 
     let str = Utils.read_file file in
     let str = String.concat "\n" str in
-    parse_string str   
+    let a = parse_string str 
+    in let  _,doc = separate_preamble a 
+    in let doc = separate_sections doc
+    in doc;;

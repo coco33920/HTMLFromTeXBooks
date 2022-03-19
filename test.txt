@@ -3,6 +3,9 @@
 Hello 
 \begin{document}
 tralalala
+\begin{center}
+au center
+\end{center}
 \textit{\textbf{!!!}}
 selsle
 \end{document}
