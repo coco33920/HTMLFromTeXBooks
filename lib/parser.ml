@@ -64,7 +64,7 @@ let print_list_of_section ?(start_chapter=1) ?(specific_chapter=(-1)) section =
       let title = Printf.sprintf "<h1 id=\"%d\">Chapter %d : %s<h1><br>\n" i i (String.trim(s)) in 
       let total = result^title^results in
       aux total l
-    | Chap(s,sec,i)::l when i>=start_chapter && i=(-1)->
+    | Chap(s,sec,i)::l when i>=start_chapter && (specific_chapter=(-1)) ->
       let results = aux "" sec in 
       let title = Printf.sprintf "<h1 id=\"%d\">Chapter %d : %s </h1><br>\n"  i i (String.trim(s)) in
       let total = result^title^results in
