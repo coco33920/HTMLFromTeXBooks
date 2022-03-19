@@ -1,4 +1,5 @@
 open Parser
+  
 (**
    Library used for the project
    @author Charlotte Thomas
@@ -127,9 +128,9 @@ let prepare_body ?(name="TeX Created File") str nodes =
   let t =  t^"</body>" in
   t;;
 
-let print_file ?(start_chapter=1) filename outfile name = 
+let print_file ?(start_chapter=1) filename outfile name chapter = 
   let file = parse_file filename in
   let file = execute file in
-  let c = print_list_of_section ~start_chapter:start_chapter file in
+  let c = print_list_of_section ~start_chapter:start_chapter ~specific_chapter:chapter file in
   let c = prepare_body ~name:name c file in
-  Utils.write_to_file outfile c;;
+  Utils.write_to_file outfile c

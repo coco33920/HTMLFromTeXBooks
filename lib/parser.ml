@@ -38,7 +38,7 @@ let shuffle lst =
   in List.rev (redistribute 0 [] lst);;
 
 
-let print_list_of_section ?(start_chapter=1) section =
+let print_list_of_section ?(start_chapter=1) ?(specific_chapter=(-1)) section =
   let rec aux result lst = match lst with
     | [] -> result
     | Nil::q -> aux result q
@@ -59,7 +59,12 @@ let print_list_of_section ?(start_chapter=1) section =
       let title = Printf.sprintf "<h3 id=\"%d\">Section %d : %s</h3><br>\n" (i+1000) i (String.trim(s)) in
       let total = result^title^results in
       aux total l
-    | Chap(s,sec,i)::l when i>=start_chapter->
+    | Chap(s,sec,i)::l when i=specific_chapter ->
+      let results = aux "" sec in 
+      let title = Printf.sprintf "<h1 id=\"%d\">Chapter %d : %s<h1><br>\n" i i (String.trim(s)) in 
+      let total = result^title^results in
+      aux total l
+    | Chap(s,sec,i)::l when i>=start_chapter && i=(-1)->
       let results = aux "" sec in 
       let title = Printf.sprintf "<h1 id=\"%d\">Chapter %d : %s </h1><br>\n"  i i (String.trim(s)) in
       let total = result^title^results in
@@ -145,7 +150,7 @@ let create_generic func (cons: string * section list * int -> section) i str =
     in let chapter_list = if rest = "" then chapter_list else first_node::chapter_list
     in if name="" then BigNode(chapter_list) else cons(name,chapter_list,i);;
 
-let parse_generic ?(transform=(fun x -> x)) regexp func str =
+let parse_generic ?(transform=Fun.id) regexp func str =
   let re = Str.regexp regexp in
   let re_list = Str.split re str in
   let re_list = transform re_list in

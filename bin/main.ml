@@ -3,21 +3,23 @@ let glossary_name = ref ""
 
 let name = ref ""
 let start_chapter = ref (-1) 
+let chapter = ref (-1)
 let outname = ref ""
 let spec = [
   ("--input", Arg.Set_string filename, "specify the input to the program");
   ("--output", Arg.Set_string outname, "specify the ouput to the program");
   ("--name", Arg.Set_string name, "Name of the file");
   ("--start-chapter", Arg.Set_int start_chapter, "Starting chapters");
+  ("--chapter", Arg.Set_int chapter, "compile only a chapter");
   ("--use-glossary", Arg.Set_string glossary_name, "specify the glossary")
 ]
 
-let execute_command file outfile start_chapter name =
-  Htmlfromtexbooks.Htmlgen.print_file ~start_chapter:start_chapter file outfile name
+let execute_command file outfile start_chapter name chapter =
+  Htmlfromtexbooks.Htmlgen.print_file ~start_chapter:start_chapter file outfile name chapter
 
-let parse_filename file outfile start_chapter name = 
+let parse_filename file outfile start_chapter name chapter = 
   if not (Sys.file_exists file) then (Printf.printf "The %s file do not exists" file; exit 2)
-  else execute_command file outfile start_chapter name;;
+  else execute_command file outfile start_chapter name chapter;;
 
 let write_default_configuration channel = 
   output_string channel "start_chapter=1\n";
@@ -99,4 +101,4 @@ else
   Printf.printf "Starting chapter is %d\n" !start_chapter;
 
 Htmlfromtexbooks.Glossary.init_glossary !glossary_name;
-parse_filename !filename !outname !start_chapter !name;;
+parse_filename !filename !outname !start_chapter !name !chapter;;

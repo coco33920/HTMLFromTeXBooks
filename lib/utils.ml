@@ -1,7 +1,6 @@
 (**
    Utilities
 *)
-
 let string_starts_with prefix str =
   if String.length prefix > String.length str then false else 
     let a = String.sub str 0 (String.length prefix) in String.equal a prefix;;
