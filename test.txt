@@ -1,30 +1,8 @@
-\chapter{Oh... Crap.}
-test22
-\textit{Units, times, and language has been translated from Union Standard to Earth Standard}\par
-\textit{\textbf{Aarin POV, A few months before the first chapter, TW: Abusive parents, traumas}} \par
-\bigskip
-- “This mission is becoming very boring”, Aarin said to himself,
-Aarin was on his second year of the human observation mission, in the far Sol system, 
-he was a xenobiologist, xenosociologist and more importantly a xenolinguist, 
-Aarin was the first of \gls{union} Science Program to fully understand the Earth Standard language and 
-learn it enough to be fluent, so naturally he was chosen to be on the second maned observation mission after the 
-famous discovery made a few union years ago, no more than a century ago he corrected himself, he must think in humans units.\par
-\bigskip
-
-Unfortunately the mission was really boring, the automated probes stationed in the system were 
-excellent at their job, so he didn't have a lot to do. The next refueling ship was excepted next 
-month, but he really was lonely. On a whim he decided to check on his latest22… discovery.\par
-\bigskip
-
-See, his society does not have the concept of… gender it was a completely alien concept to them, so as a 
-xenosociologist he was thrilled to study this specie, he knew humans were not ready for first contact yet, 
-they only were an archaic society, a class 1 on the Union Scale, they only managed to exploit the resources of their 
-planet, and they really were doing a bad job at it, probes and scopes calculated that the atmospheric composition was 
-becoming toxic to the Earthen lives.\par
-\bigskip
-
-However, they outran every calculation of the union scientists when they unionized their planet in only two decades. 
-And they were really coming from far away… In and all their society was fascinating to study. 
-He secretly hoped they'll correct their trajectory and one day become ready to integrate the local inter-stellar community, 
-the rhythm of their discovery and the speed at which they develop new technologies were incredible.\par
-\bigskip
+\documentclass{article}
+\usepackage{babel}
+Hello 
+\begin{document}
+tralalala
+\textit{\textbf{!!!}}
+selsle
+\end{document}
