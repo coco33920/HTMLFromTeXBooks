@@ -13,35 +13,12 @@ let spec = [
   ("--chapter", Arg.Set_int chapter, "compile only a chapter");
 ]
 
-let execute_command file name outname start_chapter =
-  Htmlfromtexbooks.Parser.print_file_in_html ~min_chap:start_chapter file name outname;;
+let execute_command file outname start_chapter =
+  Htmlfromtexbooks.Parser.print_file_in_html ~min_chap:start_chapter file outname;;
 
-let parse_filename file name outname start_chapter = 
+let parse_filename file outname start_chapter = 
   if not (Sys.file_exists file) then (Printf.printf "The %s file do not exists" file; exit 2)
-  else execute_command file name outname start_chapter;;
-
-let write_default_configuration channel = 
-  output_string channel "start_chapter=1\n";
-  flush channel;
-  output_string channel "name=TeX Generator\n";
-  flush channel;
-  output_string channel "";
-  flush channel;;
-
-
-
-let load_configuration () = 
-  let a = Unix.getenv "HOME" in
-  let b = a ^ (Filename.dir_sep) ^ ".htmlfromtexbooks" 
-  in if not (Sys.file_exists b) then Unix.mkdir b 0o640 
-  else if not (Sys.is_directory b) then (Sys.remove b; Unix.mkdir b 0o755);
-  let c = b ^ (Filename.dir_sep) ^ ".config" in 
-  if not (Sys.file_exists c) then (let d = open_out c in write_default_configuration d; close_out d;);
-  let f = open_in c 
-  in let c = input_line f in let d = input_line f
-  in let d,c = (Str.global_replace (Str.regexp "name=") "" d),(Str.global_replace (Str.regexp "start_chapter=") "" c)
-  in d,int_of_string c;;
-
+  else execute_command file outname start_chapter;;
 
 let find_opt (a : 'a -> bool) (arr: 'a array)  = 
   let arr = Array.to_list arr in
@@ -65,7 +42,6 @@ let detect_a_file () =
 let msg = "htmlfromtex --input <file> --output <out_file> [| --name <name> | --start-chapter <chapter>]";;
 let _ =
   Arg.parse spec (fun _ -> ()) msg;
-  let default_name,_ = load_configuration () in
   if !filename = "" then 
     let a = detect_a_file () in
     if a = "" then (print_string msg; exit 2) else (filename := a);
@@ -77,6 +53,4 @@ let _ =
     Printf.printf "output filename has been automatically generated to be %s\n" !outname;
   else
     Printf.printf "output filename is %s\n" !outname;
-  if !name = "" then
-    name := default_name;
-  parse_filename !filename !name !outname !start_chapter
+  parse_filename !filename !outname !start_chapter;;

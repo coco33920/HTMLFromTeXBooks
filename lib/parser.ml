@@ -384,9 +384,9 @@ let pre_parse_file file =
     doc;;
 
 
-let print_file_in_html ?(min_chap=1) file name outname =
+let print_file_in_html ?(min_chap=1) file outname =
   let a = pre_parse_file file in
   let html = parse_to_html ~min_chap:min_chap a in 
   let toc = print_table_of_content a min_chap in
-  prepare_body name html toc
+  prepare_body (Hashtbl.find preamble "title") html toc
   |> write_to_file outname;;
