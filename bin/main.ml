@@ -2,7 +2,7 @@ let filename = ref ""
 let glossary_name = ref ""
 
 let name = ref ""
-let start_chapter = ref (-1) 
+let start_chapter = ref (1) 
 let chapter = ref (-1)
 let outname = ref ""
 let spec = [
@@ -14,12 +14,12 @@ let spec = [
   ("--use-glossary", Arg.Set_string glossary_name, "specify the glossary")
 ]
 
-let execute_command file name outname =
-  Htmlfromtexbooks.Parser.print_file_in_html file name outname;;
+let execute_command file name outname start_chapter =
+  Htmlfromtexbooks.Parser.print_file_in_html ~min_chap:start_chapter file name outname;;
 
-let parse_filename file name outname = 
+let parse_filename file name outname start_chapter = 
   if not (Sys.file_exists file) then (Printf.printf "The %s file do not exists" file; exit 2)
-  else execute_command file name outname;;
+  else execute_command file name outname start_chapter;;
 
 let write_default_configuration channel = 
   output_string channel "start_chapter=1\n";
@@ -80,4 +80,4 @@ let _ =
     Printf.printf "output filename is %s\n" !outname;
   if !name = "" then
     name := default_name;
-  parse_filename !filename !name !outname
+  parse_filename !filename !name !outname !start_chapter

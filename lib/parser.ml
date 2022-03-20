@@ -19,13 +19,13 @@ type structure =  (*OK*)
 
 let parse_to_html ?(min_chap=1) ast= 
   let count = [|1;1;1;1|] in
-  let rec aux acc ast = 
+  let rec aux ?(write=true) acc ast = 
   match ast with
     | [] -> acc
     | Nul::q -> aux acc q
     | Line s::q -> 
-      let line= Printf.sprintf "%s\n" s
-      in aux (acc^line) q
+      let line= if write then Printf.sprintf "%s\n" s else ""
+      in aux ~write:write (acc^line) q
     | AtomicCmd s::q ->
       let new_line = (match s with
         | "par" -> "<br/>\n"
@@ -35,7 +35,8 @@ let parse_to_html ?(min_chap=1) ast=
         | "item" -> "·"
         | "newline" -> "<br/>\n"
         | _ -> "")
-      in aux (acc^new_line^"\n") q
+      in let new_acc = if write then acc^new_line^"\n" else ""
+      in aux ~write:write new_acc q
     | OneArgCmd (s,l)::q -> 
       let str = aux "" l in 
       let new_line = (match s with
@@ -49,21 +50,19 @@ let parse_to_html ?(min_chap=1) ast=
         | "textbf" -> (Printf.sprintf "<b>%s</b>" str)
         | "url" -> (Printf.sprintf "<a href=\"%s\">%s</a>" (Str.global_replace (Str.regexp "\n") "" str) str)
         | _ -> str)
-      in aux (acc^new_line) q
+      in let new_acc = if write then acc^(new_line) else ""
+      in aux ~write:write new_acc q
     | Chapter (s,l)::q -> 
       let chapnum = count.(0) in
-      if chapnum >= min_chap then
-      (begin
-        count.(0) <- count.(0) + 1;
-        count.(1) <- 1;
-        count.(2) <- 1;
-        count.(3) <- 1;
-      end;
-      let str = aux "" l in
-      let new_line = Printf.sprintf "<h1>Chapter %i : %s</h1><br/>\n" chapnum s in
-      aux (acc^new_line^str) q)
-    else 
-      aux acc q
+          begin
+            count.(0) <- count.(0) + 1;
+            count.(1) <- 1;
+            count.(2) <- 1;
+            count.(3) <- 1;
+          end;
+          let str = aux ~write:(chapnum>=min_chap) "" l in
+          let new_line = if chapnum>=min_chap then Printf.sprintf "<h1>Chapter %i : %s</h1><br/>\n" chapnum s else "" in
+          aux ~write:write (acc^new_line^str) q
     | Section (s,l)::q -> 
       let chapnum,secnum = count.(0),count.(1) in
       begin
@@ -71,9 +70,9 @@ let parse_to_html ?(min_chap=1) ast=
         count.(2) <- 1;
         count.(3) <- 1;
       end;
-      let str = aux "" l in
+      let str = aux ~write:write "" l in
       let new_line = Printf.sprintf "<h2>Section %i.%i : %s</h2><br/>\n" chapnum secnum s in
-      aux (acc^new_line^str) q
+      aux ~write:write (acc^new_line^str) q
     | Subsection (s,l)::q -> 
       let chapnum,secnum,ssecnum = count.(0),count.(1),count.(2) in
       begin
@@ -82,22 +81,22 @@ let parse_to_html ?(min_chap=1) ast=
       end;
       let str = aux "" l in
       let new_line = Printf.sprintf "<h3>Subsection %i.%i.%i : %s</h3><br/>\n" chapnum secnum ssecnum s in
-      aux (acc^new_line^str) q
+      aux ~write:write (acc^new_line^str) q
     | Subsubsection (s,l)::q ->
       let chapnum,secnum,ssecnum,sssecnum = count.(0),count.(1),count.(2),count.(3) in
       begin
         count.(3) <- count.(3) + 1;
       end;
-      let str = aux "" l in
+      let str = aux ~write:write "" l in
       let new_line = Printf.sprintf "<h4>Subsubsection %i.%i.%i.%i : %s</h4><br/>\n" chapnum secnum ssecnum sssecnum s in
-      aux (acc^new_line^str) q
+      aux ~write:write (acc^new_line^str) q
     | Env (s,l)::q -> 
-      let str = aux "" l in 
+      let str = aux ~write:write "" l in 
       let new_line = (match s with
         | "document" -> str
         | "center" -> Printf.sprintf "<div style=\"margin: auto; text-align: center;\">\n%s\n</div>" str
         | _ -> str)
-      in aux (acc^new_line^"\n") q
+      in aux ~write:write (acc^new_line^"\n") q
     | _::q -> aux acc q
   in aux "" ast;;
 
@@ -246,8 +245,8 @@ let pre_parse_file file =
     in doc;;
 
 
-let print_file_in_html file name outname =
+let print_file_in_html ?(min_chap=1) file name outname =
   let a = pre_parse_file file in
-  let a = parse_to_html a in 
+  let a = parse_to_html ~min_chap:min_chap a in 
   prepare_body name a 
   |> Utils.write_to_file outname;;
