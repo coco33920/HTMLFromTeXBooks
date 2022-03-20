@@ -22,6 +22,45 @@ type ast =
   | Node of structure * ast * ast
 
 
+
+
+let parse_to_html ast = 
+  let rec aux acc ast = 
+  match ast with
+    | [] -> acc
+    | Nul::q -> aux acc q
+    | Line s::q -> 
+      let line= Printf.sprintf "<span>%s</span>\n" s
+      in aux (acc^line) q
+    | AtomicCmd s::q ->
+      let new_line = (match s with
+        | "par" -> "<br>\n"
+        | "bigskip" -> "</p><br><br>\n<p>"
+        | "printglossaries" -> ""
+        | "item" -> "·"
+        | _ -> "")
+      in aux (acc^new_line^"\n") q
+    | OneArgCmd (s,l)::q -> 
+      let str = aux "" l in 
+      let new_line = (match s with
+        | "par" -> "<br>\n"
+        | "bigskip" -> "</p><br><br>\n<p>\n"
+        | "printglossaries" -> ""
+        | "item" -> "·"
+        | "textit" -> (Printf.sprintf "<i>%s</i>" str) 
+        | "textbf" -> (Printf.sprintf "<b>%s</b>" str)
+        | _ -> str)
+      in aux (acc^new_line) q
+    | Env (s,l)::q -> 
+      let str = aux "" l in 
+      let new_line = (match s with
+        | "document" -> str
+        | "center" -> Printf.sprintf "<div style=\"margin: auto; text-align: center;\">\n%s\n</div>" str
+        | _ -> str)
+      in aux (acc^new_line^"\n") q
+    | _::q -> aux acc q
+  in aux "" ast;;
+        
 (**
 Si on rencontre un \
   => On appelle parse_command
@@ -156,7 +195,7 @@ let separate_sections lst =
           tab.(3) <- true;
           extract_section (chap::acc) l
       | e::q -> extract_section (e::acc) q
-  in let a,_ = extract_section [] lst in a;;
+  in let a,_ = extract_section [] lst in List.rev a;;
     
     
        
@@ -166,4 +205,5 @@ let pre_parse_file file =
     let a = parse_string str 
     in let  _,doc = separate_preamble a 
     in let doc = separate_sections doc
+    in let doc = calculate_environments doc
     in doc;;

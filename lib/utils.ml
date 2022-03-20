@@ -14,3 +14,9 @@ let read_file filename =
     close_in chan;
     List.rev !lines ;;
   end;;
+
+  let write_to_file file str =
+    let f = open_out file in
+    output_string f str;
+    flush f;
+    close_out f;;
