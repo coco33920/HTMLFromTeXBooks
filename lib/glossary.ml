@@ -70,6 +70,7 @@ let total_glossaries file =
 
 (** Transform the glossary to an HTML file *)
 let prints_glossary () =
+  if not @@ glossary_provided () then "" else 
   let line = "<div id=\"glossary\"><br>\n>" in
   let line = line^"<h2>Glossary</h2>" in
   let rec aux result (entries) = 
@@ -80,12 +81,7 @@ let prints_glossary () =
   in let line = aux line (List.of_seq (Hashtbl.to_seq glossaries))
   in line^"</div>\n";; 
 
-(** takes the char list and returns the (name,description) of the given glossary entry and the remaining of the list *)
-let recognize_gls lst = 
-  let rec aux acc lst = match lst with
-    | [] -> acc,[]
-    | t::q when t='}' -> acc,q
-    | t::q when t='{' -> aux acc q
-    | t::q -> aux (acc^(String.make 1 t)) q
-  in let desc,q = aux "" lst
-  in (Hashtbl.find glossaries desc),desc,q;;
+let recognize_gls name = 
+  try 
+    Hashtbl.find glossaries name;
+  with _ -> name,name;;

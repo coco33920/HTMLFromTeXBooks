@@ -1,193 +1,392 @@
-(**Type representing a section*)
-type section = Nil (**Nul*)
-             | Node of string * string list  (**Node: a node is a string, the text of the node, text list *)
-             | BigNode of section list
-             | Subsubsection of string * section list * int
-             | Subsection of string * section list * int (**Subsection: a subsection is the subsection of a text*)
-             | Section of string * section list * int (**A section is a name and the list of all nodes/subsection*)
-             | Chap of string * section  list * int
+open Glossary
+open Utils
+type cmd = 
+  | NullCommand
+  | AtomCmd of string * string list 
+  | SimpleCmd of string * string list * string
+  | MultipleCmd of string * string list * string list
+type structure =  (*OK*)
+  | Nul 
+  | Line of string 
+  | Cmd of cmd 
+  | AtomicCmd of string * string list
+  | OneArgCmd of string * string list * structure list 
+  | MultipleArgCmd of string * string list * structure list list
+  | Env of string * structure list 
+  | Subsubsection of string * structure list
+  | Subsection of string * structure list 
+  | Section of string * structure list 
+  | Chapter of string * structure list 
 
-(** Glossary type : It can be a Nil or an "Entry" : a tuple of a string (the key), a string (the name) and a string (the definition) *)
-type glossary = Nul | Entry of string * string * string;;
+let preamble = Hashtbl.create 1;;
+let commands = Hashtbl.create 1;;
 
-
-let put_int_into_node i = function
-  | Nil -> Nil
-  | Node(a,b) -> Node(a,b)
-  | Subsubsection(a,b,_) -> Subsubsection(a,b,i)
-  | Subsection(a,b,_) -> Subsection(a,b,i)
-  | Section(a,b,_) -> Section(a,b,i)
-  | BigNode(a) -> BigNode(a)
-  | Chap(a,b,_) -> Chap(a,b,i);;
-
-let rec expand a lst = 
-  match a with
-  | [] -> lst
-  | t::q -> expand q (t::lst);;
-
-let shuffle lst = 
-  let rec redistribute i acc lst = match lst with
+let parse_to_html ?(min_chap=1) ast= 
+  let count = [|1;1;1;1|] in
+  let rec aux ?(write=true) acc ast = 
+  match ast with
     | [] -> acc
-    | Nil::q -> redistribute i acc q
-    | Node(a,b)::q -> redistribute i (Node(a,b)::acc) q
-    | Subsubsection(a,b,_)::q -> redistribute (i+1) (Subsubsection(a,b,i)::acc) q
-    | Subsection(a,b,_)::q -> redistribute (i+1) (Subsection(a,b,i)::acc) q
-    | Section(a,b,_)::q -> redistribute (i+1) (Section(a,b,i)::acc) q
-    | Chap(a,b,_)::q -> redistribute (i+1) (Chap(a,b,i)::acc) q
-    | BigNode(a)::q -> redistribute (i) (expand (a) acc) q
-  in List.rev (redistribute 0 [] lst);;
+    | Nul::q -> aux acc q
+    | Line s::q -> 
+      let line= if write then Printf.sprintf "%s\n" s else ""
+      in aux ~write:write (acc^line) q
+    
+    | AtomicCmd (s,_)::q ->
+      let new_line = (match s with
+        | "par" -> "<br/>\n"
+        | "bigskip" -> "</p>\n\n<p>\n"
+        | "\\" -> "<br/>\n"
+        | "printglossaries" -> ""
+        | "sep" -> "<div class=\"center\"><b>***</b></div>"
+        | "item" -> "·"
+        | "newline" -> "<br/>\n"
+        | "ast" -> "*"
+        | e ->
+          (try 
+            let structure = Hashtbl.find commands e in 
+            let str = aux ~write:write acc structure 
+            in str 
+          with _ -> ""))
+      in let new_acc = if write then acc^new_line^"\n" else ""
+      in aux ~write:write new_acc q
+    
+    | OneArgCmd (s,_,l)::q -> 
+      let str = aux "" l in 
+      let new_line = (match s with
+        | "par" -> "<br/>\n"
+        | "bigskip" -> "</p>\n\n<p>\n"
+        | "\\" -> "<br/>\n"
+        | "printglossaries" -> ""
+        | "item" -> "·"
+        | "sep" -> "<div class=\"center\"><b>***</b></div>"
+        | "newline" -> "<br/>\n"
+        | "ast" -> "*"
+        | "gls" ->
+            (match l with 
+              | [] -> ""
+              | Line s::_ -> 
+                let name,_ = recognize_gls s in Printf.sprintf "<a href=\"#%s\">%s</a>" s name
+              | _::_ -> "")
+        | "textit" -> (Printf.sprintf "<i>%s</i>" str) 
+        | "textbf" -> (Printf.sprintf "<b>%s</b>" str)
+        | "url" -> (Printf.sprintf "<a href=\"%s\">%s</a>" (Str.global_replace (Str.regexp "\n") "" str) str)
+        | e ->
+          (try 
+            let structure = Hashtbl.find commands e in 
+            let str = aux ~write:write acc structure 
+            in str 
+          with _ -> ""))
+      in let new_acc = if write then acc^(new_line) else ""
+      in aux ~write:write new_acc q
+    
+    | Chapter (s,l)::q -> 
+      let chapnum = count.(0) in
+          begin
+            count.(0) <- count.(0) + 1;
+            count.(1) <- 1;
+            count.(2) <- 1;
+            count.(3) <- 1;
+          end;
+          let str = aux ~write:(chapnum>=min_chap) "" l in
+          let new_line = if chapnum>=min_chap then Printf.sprintf "<h1 id=\"c%i\">Chapter %i : %s</h1><br/>\n" 
+            chapnum (chapnum-min_chap+1) s else "" in
+          aux ~write:write (acc^new_line^str) q
+    
+    | Section (s,l)::q -> 
+      let chapnum,secnum = count.(0),count.(1) in
+      begin
+        count.(1) <- count.(1) + 1;
+        count.(2) <- 1;
+        count.(3) <- 1;
+      end;
+      let str = aux ~write:write "" l in
+      let new_line = Printf.sprintf "<h2 id=\"s%f\">Section %i.%i : %s</h2><br/>\n" 
+        (2.**(float chapnum)*.3.**(float secnum)) (chapnum-min_chap+1) secnum s in
+      aux ~write:write (acc^new_line^str) q
+    
+    | Subsection (s,l)::q -> 
+      let chapnum,secnum,ssecnum = count.(0),count.(1),count.(2) in
+      begin
+        count.(2) <- count.(2) + 1;
+        count.(3) <- 1;
+      end;
+      let str = aux ~write:write "" l in
+      let new_line = Printf.sprintf "<h3 id=\"ss%f\">Subsection %i.%i.%i : %s</h3><br/>\n" 
+      (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)) (chapnum-min_chap+1) secnum ssecnum s in
+      aux ~write:write (acc^new_line^str) q
+    
+    | Subsubsection (s,l)::q ->
+      let chapnum,secnum,ssecnum,sssecnum = count.(0),count.(1),count.(2),count.(3) in
+      begin
+        count.(3) <- count.(3) + 1;
+      end;
+      let str = aux ~write:write "" l in
+      let new_line = Printf.sprintf "<h4 id=\"sss%f\">Subsubsection %i.%i.%i.%i : %s</h4><br/>\n" 
+      (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)*.7.**(float sssecnum)) (chapnum-min_chap+1) secnum ssecnum sssecnum s in
+      aux ~write:write (acc^new_line^str) q
+    
+    | Env (s,l)::q -> 
+      let str = aux ~write:write "" l in 
+      let new_line = (match s with
+        | "document" -> str
+        | "center" -> Printf.sprintf "<div style=\"margin: auto; text-align: center;\">\n%s\n</div>" str
+        | _ -> str)
+      in aux ~write:write (acc^new_line^"\n") q
+    | _::q -> aux acc q
+  in aux "" ast;;
+
+let print_table_of_content ast min_chap =
+  let count = [|1;1;1;1|] in
+  let rec aux acc ast = 
+    match ast with
+      | [] -> acc
+      | Chapter (s,l)::q -> 
+        let chapnum = count.(0) in
+            begin
+              count.(0) <- count.(0) + 1;
+              count.(1) <- 1;
+              count.(2) <- 1;
+              count.(3) <- 1;
+            end;
+            let str = aux "" l in
+            let new_line = if chapnum>=min_chap then Printf.sprintf "<li><a href=\"#c%i\">Chapter %i : %s</a></li>\n" 
+              chapnum (chapnum-min_chap+1) s else "" in
+            aux (acc^new_line^str) q
+
+      | Section (s,l)::q -> 
+        let chapnum,secnum = count.(0),count.(1) in
+        begin
+          count.(1) <- count.(1) + 1;
+          count.(2) <- 1;
+          count.(3) <- 1;
+        end;
+        let str = aux "" l in
+        let new_line = Printf.sprintf "<li><a href=\"#s%f\">Section %i.%i : %s</a></li>\n" 
+          (2.**(float chapnum)*.3.**(float secnum)) (chapnum-min_chap+1) secnum s in
+        aux (acc^new_line^str) q
+      
+      | Subsection (s,l)::q -> 
+        let chapnum,secnum,ssecnum = count.(0),count.(1),count.(2) in
+        begin
+          count.(2) <- count.(2) + 1;
+          count.(3) <- 1;
+        end;
+        let str = aux "" l in
+        let new_line = Printf.sprintf "<li><a href=\"#ss%f\">Subsection %i.%i.%i : %s</a></li>\n" 
+        (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)) (chapnum-min_chap+1) secnum ssecnum s in
+        aux  (acc^new_line^str) q
+      
+      | Subsubsection (s,l)::q ->
+        let chapnum,secnum,ssecnum,sssecnum = count.(0),count.(1),count.(2),count.(3) in
+        begin
+          count.(3) <- count.(3) + 1;
+        end;
+        let str = aux "" l in
+        let new_line = Printf.sprintf "<li><a href=\"#sss%f\">Subsubsection %i.%i.%i.%i : %s</a></li>\n" 
+        (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)*.7.**(float sssecnum)) (chapnum-min_chap+1) secnum ssecnum sssecnum s in
+        aux  (acc^new_line^str) q
+      | Env (_,l)::q -> let a = aux acc l in aux (acc^a) q
+      | _::q -> aux acc q
+  in (aux "" ast);;
+
+let prepare_body name str toc =
+  let line = "<title>" ^ name ^ "</title>\n"
+  in let line = line ^ "<body>\n"
+  in let line = line ^ "<style>\n.center {\nmargin:auto;\ntext-align:center;\n}\n </style>"
+  in let line = line ^ "<div class=\"center\">\n" 
+  in let line = line ^ (Printf.sprintf "<h1>%s</h1>\n" name)
+  in let line = line ^ "<h2>Table of Content</h2>\n"
+  in let line = line ^ "<ul>\n"
+  in let line = line ^ toc ^ "\n"
+  in let line = line ^ "</ul>\n"
+  in let line = line ^ "</div>\n"
+  in let line = line ^ str ^ "\n"
+  in let line = line ^ (prints_glossary ()) ^ "\n"
+  in let line = line ^ "</body>"
+  in line;;
+
+(*TODO: prendre en compte les nested cmd pour éviter les }} rémanent*)
+let parse_interior_of_an_accolade list_of_chars acc = 
+  let stack = Stack.create () in
+  let rec parse list_of_chars acc  =
+  match list_of_chars with 
+    | [] -> acc,[]
+    | t::q when t='{' -> Stack.push t stack; parse q (acc^(String.make 1 t)) 
+    | t::q when t='}' -> if Stack.is_empty stack then acc,q else (Stack.pop stack |> ignore; parse q (acc^(String.make 1 t))) 
+    | t::q -> parse q (acc^(String.make 1 t))
+  in parse list_of_chars acc;;
+
+let rec parse_arguments list_of_chars current_acc acc = 
+  match list_of_chars with
+    | [] -> current_acc::acc,[]
+    | t::q when t=']' -> (current_acc::acc),q
+    | t::q when t=',' -> parse_arguments q "" (current_acc::acc)
+    | t::q when t=' ' -> parse_arguments q current_acc acc
+    | t::q -> parse_arguments q (current_acc^(String.make 1 t)) acc;;
+
+let parse_command list_of_chars =
+  let rec parse_command_rec list_of_chars acc = 
+    match list_of_chars with
+      | [] -> acc,[]
+      | t::q when t='{' -> 
+        let a,q = parse_interior_of_an_accolade q "" in
+        let acc = (match acc with 
+          | NullCommand -> AtomCmd (a,[])
+          | AtomCmd (b,c) -> SimpleCmd (b,c,a) 
+          | SimpleCmd (b,e,c) -> MultipleCmd (b,e,a::c::[]) 
+          | MultipleCmd (b,e,c) -> MultipleCmd(b,e,a::c))
+        in parse_command_rec q acc
+      | t::q when t='[' ->
+        let a,q = parse_arguments q "" [] in 
+        let acc = (match acc with 
+        | NullCommand -> NullCommand
+        | AtomCmd (c,b) -> AtomCmd (c,b@a)
+        | SimpleCmd(b,e,c) -> SimpleCmd (b,e@a,c)
+        | MultipleCmd(b,e,c) -> MultipleCmd(b,e@a,c))
+      in parse_command_rec q acc
+      | t::q when (t='\n' || t=' ') -> acc,q
+      | t::q when (t='$') -> acc,q
+      | t::q -> match acc with
+        | NullCommand -> parse_command_rec q (AtomCmd ((String.make 1 t),[]))
+        | AtomCmd (b,_) -> parse_command_rec q (AtomCmd ((b^(String.make 1 t),[])))
+        | _ -> acc,(t::q)
+  in let cmd,l = parse_command_rec list_of_chars (NullCommand)
+  in 
+  match cmd with 
+    | MultipleCmd (s,e,l2) -> MultipleCmd (s,e,List.rev l2),l
+    | e -> e,l;;
+
+let append_line str q =
+  match (String.trim (str)) with
+    | "$" -> q
+    | "~" -> q
+    | "~$" -> q
+    | "" -> q
+    | e -> Line(e)::q
 
 
-let print_list_of_section ?(start_chapter=1) ?(specific_chapter=(-1)) section =
-  let rec aux result lst = match lst with
-    | [] -> result
-    | Nil::q -> aux result q
-    | Node(s,_)::l -> aux (result^Printf.sprintf "%s\n" s) l
-    | BigNode(a)::q -> let r = aux "" a in  aux (result^r) q
-    | Subsubsection(s,sec,i)::l -> 
-      let results = aux "" sec in 
-      let title = Printf.sprintf "<h4 id=\"%d\">Subsubsection %d : %s</h4><br>\n" (i+1_000_000_000) i (String.trim(s)) in
-      let total = result^title^results in
-      aux total l
-    | Subsection(s,sec,i)::l ->
-      let results = aux "" sec in 
-      let title = Printf.sprintf "<h3 id=\"%d\">Subsection %d : %s</h3><br>\n" (i+1_000_000) i (String.trim((s))) in
-      let total = result^title^results in
-      aux total l
-    | Section(s,sec,i)::l ->
-      let results = aux "" sec in
-      let title = Printf.sprintf "<h3 id=\"%d\">Section %d : %s</h3><br>\n" (i+1000) i (String.trim(s)) in
-      let total = result^title^results in
-      aux total l
-    | Chap(s,sec,i)::l when i=specific_chapter ->
-      let results = aux "" sec in 
-      let title = Printf.sprintf "<h1 id=\"%d\">Chapter %d : %s<h1><br>\n" i i (String.trim(s)) in 
-      let total = result^title^results in
-      aux total l
-    | Chap(s,sec,i)::l when i>=start_chapter && (specific_chapter=(-1)) ->
-      let results = aux "" sec in 
-      let title = Printf.sprintf "<h1 id=\"%d\">Chapter %d : %s </h1><br>\n"  i i (String.trim(s)) in
-      let total = result^title^results in
-      aux total l
-    | _::l -> aux result l
-  in aux "" section;;
 
-
-let print_table_of_content ?(start_chapter=1) section = 
-  let rec aux result lst = match lst with
-    | [] -> result
-    | Nil::q -> aux result q
-    | Node(_,_)::q -> aux result q
-    | Subsubsection(name,_,i)::l ->
-      let title = Printf.sprintf "<li><a href=\"#%d\"><b>Subsubsection %d : %s</b></a></li>\n" (i+1_000_000_000) (i) name in
-      aux (result^title) l
-    | Subsection(name,list_of_subsubsection,i)::l -> 
-      let title = Printf.sprintf "<li><a href=\"#%d\"><b>Subsection %d : %s<b></a></li>\n<ul>" (i+1_000_000) (i) name  in 
-      let title = title ^ (aux "" list_of_subsubsection) in
-      let title = title ^ "</ul>\n"
-      in aux (result^title) l
-    | Section(name,list_of_sections,i)::l -> 
-      let title = Printf.sprintf "<li><a href=\"#%d\"><b>Section %d : %s</b></a></li>\n<ul>" (i+1000) (i) name in
-      let title = title ^ (aux "" list_of_sections) in
-      let title = title ^ "</ul>\n"
-      in aux (result^title) l
-    | Chap(name,list_of_sections,i)::l when i>=start_chapter ->
-      let title = Printf.sprintf "<li><a href=\"#%d\"><b>Chapter %d : %s</h2></b></a></li>\n<ul>" (i) (i) name in
-      let title = title ^ (aux "" list_of_sections) in
-      let title = title ^ "</ul>\n" in
-      aux (result^title) l 
-    | _::q -> aux result q
-  in (aux "<div class=\"center\"><ul><br>\n" section)^("</ul></div>\n")
-
-let extract_name f = 
-  if not ((Utils.string_starts_with "{" f) || Utils.string_starts_with "*{" f) then "",f else 
-    let rec read_name result lst = 
+let rec parse_string str = 
+let rec parse current_acc acc lst = 
       match lst with
-      | [] -> result,[]
-      | t::q when t='}' -> result,q
-      | t::q -> read_name (result^(String.make 1 t)) q
-    in let rec read lst = 
-         match lst with 
-         | [] -> "",""
-         | t::q when t='{' -> 
-           let name,q = read_name "" q in
-           name,(Utils.list_to_string q)
-         | _::q -> read q
-    in read (Utils.string_to_list f);;
+        | [] -> append_line current_acc acc
+        | t::q when t='\\' -> 
+          let cmd,l = parse_command q in 
+          parse "" (Cmd(cmd)::(append_line current_acc acc)) l
+        | t::q -> parse (current_acc^(String.make 1 t)) acc q
+and parse_nested_commands ast_list = 
+  match ast_list with
+    | [] -> []
+    | Line s::q -> (Line s)::(parse_nested_commands q)
+    | Cmd c::q -> 
+      let a = (match c with
+        | NullCommand -> Nul
+        | AtomCmd (s,e) -> AtomicCmd (s,e)
+        | SimpleCmd (s,e,s2) -> OneArgCmd (s,e,(parse_string s2))
+        | MultipleCmd (s,e,s2) -> MultipleArgCmd (s,e,(List.map (parse_string) s2)))
+      in a::(parse_nested_commands q)
+    | _::q -> parse_nested_commands q
+  in let a = parse "" [] (string_to_list str)
+  in let a = parse_nested_commands a
+  in List.rev a;; 
 
-let create_subsubsection i str =
-  let str = String.trim str in 
-  if str="" then Nil else
-    let newline = Str.regexp "\n" in
-    let line_list = Str.split newline str
-    in let name,rest = extract_name (List.hd line_list) in let name,rest = String.trim name,String.trim rest in
-    let new_list = rest::(List.tl line_list)
-    in let tl = List.map (String.trim) new_list
-    in let tl = List.filter (fun a -> not (String.equal "" a)) tl
-    in let str = String.concat "\n" tl
-    in Subsubsection(name,[Node((str),tl)],i);;
+(*Preamble / Document*)
 
-let parse_subsubsection str =
-  let subsubsection = Str.regexp "\\\\subsubsection" in
-  let subsubsection_list = Str.split subsubsection str in
-  let subsubsection_list = List.tl subsubsection_list in
-  let a = List.map (fun c -> create_subsubsection 0 c) (subsubsection_list) in
-  shuffle a;;
-
-let create_generic func (cons: string * section list * int -> section) i str = 
-  let str = String.trim str in
-  if str = "" then Nil else 
-    let newline = Str.regexp "\n"
-    in let line_list = Str.split newline str 
-    in let name,rest = extract_name (List.hd line_list) in let name,rest = String.trim name,String.trim rest
-    in let tl = List.tl line_list
-    in let chapter_list = func (String.concat "\n" tl)
-    in let tl = List.map (String.trim) tl
-    in let tl = List.filter (fun a -> not (String.equal "" a)) tl
-    in let str = String.concat "\n" tl
-    in let chapter_list = if chapter_list=[] then [Node(str,[str])] else chapter_list 
-    in let first_node = if rest = "" then Nil else Node(rest,[rest])
-    in let chapter_list = if rest = "" then chapter_list else first_node::chapter_list
-    in if name="" then BigNode(chapter_list) else cons(name,chapter_list,i);;
-
-let parse_generic ?(transform=Fun.id) regexp func str =
-  let re = Str.regexp regexp in
-  let re_list = Str.split re str in
-  let re_list = transform re_list in
-  let a = List.map (fun c -> func 0 c) (re_list)
-  in shuffle a;;
-
-(**Automatic detection of Glossary*)
-let detect_prelude fichier =
-  let str = String.concat "\n" (Utils.read_file fichier) in
-  let first = Str.split (Str.regexp "\\\\begin{document}") str |> List.hd in
-  let tbl = Hashtbl.create 1 in
-  let line_list = Str.split (Str.regexp "\n") first in
-  let rec extract_name result list = 
-    match list with
-    | [] -> result
-    | t::_ when t='}' -> result
-    | t::q -> extract_name (result^(String.make 1 t)) q
-  in let rec detect lst =
-       match lst with 
-       | [] -> tbl
-       | t::q when (Utils.string_starts_with "\\input{" t) ->
-         let n = extract_name "" (Utils.string_to_list t) 
-         in let n = Str.global_replace (Str.regexp "\\\\input{") "" n  
-         in Hashtbl.add tbl "gloss" n; detect q
-       | t::q when (Utils.string_starts_with "\\title{" t) -> 
-         let n = extract_name "" (Utils.string_to_list t) 
-         in let n = Str.global_replace (Str.regexp "\\\\title{") "" n
-         in let n = Str.global_replace (Str.regexp "\\\\\\\\") ":" n 
-         in Hashtbl.add tbl "title" n; detect q
-       | _::q -> detect q
-  in detect line_list;;
+let separate_preamble lst = 
+  let rec iter ast_list a0 a1 =
+    match ast_list with
+      | (OneArgCmd (s,e,(Line s1)::_))::q when (String.equal s "begin") && (String.equal s1 "document") -> 
+          iter q a0 (OneArgCmd (s,e,(Line s1)::[])::a1)
+      | e::q when (List.length a1 = 0) -> iter q (e::a0) a1 
+      | e::q -> iter q a0 (e::a1)
+      | [] -> List.rev a0,List.rev a1 
+  in iter lst [] [];;
 
 
+let calculate_environments lst =
+  let rec extract_env acc lst = 
+    match lst with 
+      | [] -> acc,[]
+      | (OneArgCmd (s,_,(Line s1)::_))::q when (String.equal s "begin") ->
+        let env,l = extract_env [] q in 
+        let env = Env (s1,List.rev env) in
+        extract_env (env::acc) l
+      | (OneArgCmd (s,_,_))::q when (String.equal s "end") -> acc,q
+      | e::q -> extract_env (e::acc) q
+  in let a,_ = extract_env [] lst in a;;
 
-let create_subsection = create_generic (parse_subsubsection) (fun (a,b,c) -> Subsection(a,b,c))
-let parse_subsection = parse_generic "\\\\subsection" (create_subsection) 
-let create_section = create_generic (parse_subsection) (fun (a,b,c) -> Section(a,b,c))
-let parse_section = parse_generic "\\\\section" (create_section)
-let create_chapter = create_generic (parse_section) (fun (a,b,c) -> Chap(a,b,c))
-let parse_chapter = parse_generic ~transform:List.tl "\\\\chapter" (create_chapter)
+let rec read_preamble ast = 
+  match ast with
+    | [] -> ()
+    | OneArgCmd (s,_,(Line s1)::_)::q when (s="documentclass") -> Hashtbl.add preamble "type" s1; read_preamble q
+    | OneArgCmd (s,_,(Line s1)::_)::q when (s="input") -> Hashtbl.add preamble "glossary" s1; read_preamble q
+    | OneArgCmd (s,_,(Line s1)::_)::q when (s="title") -> Hashtbl.add preamble "title" s1; read_preamble q
+    | OneArgCmd (s,_,(Line s1)::_)::q when (s="author") -> Hashtbl.add preamble "author" s1; read_preamble q
+    | MultipleArgCmd (s,_,l)::q when (s="newcommand") ->
+      (match l with
+        | [AtomicCmd (s,_)]::n::_ when not (s="sep")
+          -> let env = calculate_environments n 
+            in Hashtbl.add commands s env; read_preamble q
+        | _ -> read_preamble q)
+    | _::q -> read_preamble q;;
+ 
+
+let separate_sections lst = 
+  let tab = [|false;false;false;false|] in
+  let rec extract_section acc lst = 
+    match lst with 
+      | [] -> acc,[]
+      | (OneArgCmd (s,e,(Line s1)::_))::q when (s="chapter" || s="chapter*")  -> 
+        if tab.(0) = true then (tab.(0) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
+        else
+          let a,l = extract_section [] q in
+          let chap = Chapter(s1,List.rev a) in
+          tab.(0) <- true;
+          extract_section (chap::acc) l
+      | (OneArgCmd (s,e,(Line s1)::_))::q when (s="section" || s="section*")  -> 
+        if tab.(1) = true then (tab.(1) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
+        else
+          let a,l = extract_section [] q in
+          let chap = Section(s1,List.rev a) in
+          tab.(1) <- true;
+          extract_section (chap::acc) l
+      | (OneArgCmd (s,e,(Line s1)::_))::q when (s="subsection" || s="subsection*") -> 
+        if tab.(2) = true then (tab.(2) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
+        else
+          let a,l = extract_section [] q in
+          let chap = Subsection(s1,List.rev a) in
+          tab.(2) <- true;
+          extract_section (chap::acc) l
+      | (OneArgCmd (s,e,(Line s1)::_))::q when (s="subsubsection" || s="subsubsection*")  -> 
+        if tab.(3) = true then (tab.(3) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
+        else
+          let a,l = extract_section [] q in
+          let chap = Subsubsection(s1,List.rev a) in
+          tab.(3) <- true;
+          extract_section (chap::acc) l
+      | e::q -> extract_section (e::acc) q
+  in let a,_ = extract_section [] lst in List.rev a;;
+    
+
+       
+let pre_parse_file file = 
+    let str = read_file file in
+    let str = String.concat "\n" str in
+    let a = parse_string str 
+    in let  p,doc = separate_preamble a 
+    in read_preamble p;
+    let doc = separate_sections doc
+    in let doc = calculate_environments doc 
+    in 
+    (match (Hashtbl.find_opt preamble "glossary") with
+      | Some s -> init_glossary s
+      | None -> (););
+    doc;;
+
+
+let print_file_in_html ?(min_chap=1) file outname =
+  let a = pre_parse_file file in
+  let html = parse_to_html ~min_chap:min_chap a in 
+  let toc = print_table_of_content a min_chap in
+  prepare_body (Hashtbl.find preamble "title") html toc
+  |> write_to_file outname;;
