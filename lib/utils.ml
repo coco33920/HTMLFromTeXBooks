@@ -1,4 +1,3 @@
-module Utils = struct
 let string_starts_with prefix str =
   if String.length prefix > String.length str then false else 
     let a = String.sub str 0 (String.length prefix) in String.equal a prefix;;
@@ -13,7 +12,6 @@ let read_file filename =
   with End_of_file ->
     close_in chan;
     List.rev !lines ;;
-  end;;
 
   let write_to_file file str =
     let f = open_out file in

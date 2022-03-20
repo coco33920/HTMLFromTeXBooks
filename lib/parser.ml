@@ -3,25 +3,18 @@ type cmd =
   | AtomCmd of string
   | SimpleCmd of string * string
   | MultipleCmd of string * string list
-type structure = 
-  | Nul (*OK*)
-  | Line of string (*OK*)
-  | Cmd of cmd  (*OK*)
-  | AtomicCmd of string (*OK*)
+type structure =  (*OK*)
+  | Nul 
+  | Line of string 
+  | Cmd of cmd 
+  | AtomicCmd of string 
   | OneArgCmd of string * structure list 
   | MultipleArgCmd of string * structure list list
-  | Env of string * structure list (*OK*)
+  | Env of string * structure list 
   | Subsubsection of string * structure list
   | Subsection of string * structure list 
   | Section of string * structure list 
   | Chapter of string * structure list 
-  | Document of structure
-  | Preamble of structure
-type ast = 
-  | Nil 
-  | Node of structure * ast * ast
-
-
 
 
 let parse_to_html ast = 
@@ -81,23 +74,20 @@ let parse_to_html ast =
       in aux (acc^new_line^"\n") q
     | _::q -> aux acc q
   in aux "" ast;;
-        
-(**
-Si on rencontre un \
-  => On appelle parse_command
-*)
 
-(**
-Parse_command lit les chars 
-  => si il rencontre un { sur une AtomCmd
-    => SimpleCmd (String text) (...)
-  => Si il rencontre un { sur une SimpleCmd
-    => Création d'une liste
-  => Si il rencontre un { sur une MultipleCmd ajoute à la commande
-  Quand on rencontre le dernier } => on renvoie
-*)
 
-(*prendre en compte les nested cmd pour éviter les }} rémanent*)
+
+let prepare_body name str =
+  let line = "<title>" ^ name ^ "</title>\n"
+  in let line = line ^ "<body>\n"
+  in let line = line ^ "<div style=\"margin: auto; text-align:center;\">\n" 
+  in let line = line ^ (Printf.sprintf "<h1>%s</h1>\n" name)
+  in let line = line ^ "</div>\n"
+  in let line = line ^ str ^ "\n"
+  in let line = line ^ "</body>"
+  in line;;
+
+(*TODO: prendre en compte les nested cmd pour éviter les }} rémanent*)
 let rec parse_interior_of_an_accolade list_of_chars acc = 
   match list_of_chars with 
     | [] -> acc,[]
@@ -228,3 +218,10 @@ let pre_parse_file file =
     in let doc = separate_sections doc
     in let doc = calculate_environments doc
     in doc;;
+
+
+let print_file_in_html file name outname =
+  let a = pre_parse_file file in
+  let a = parse_to_html a in 
+  prepare_body name a 
+  |> Utils.write_to_file outname;;
