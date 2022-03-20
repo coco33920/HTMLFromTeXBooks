@@ -17,7 +17,7 @@ type structure =  (*OK*)
   | Chapter of string * structure list 
 
 
-let parse_to_html ast = 
+let parse_to_html ?(min_chap=1) ast= 
   let count = [|1;1;1;1|] in
   let rec aux acc ast = 
   match ast with
@@ -52,7 +52,8 @@ let parse_to_html ast =
       in aux (acc^new_line) q
     | Chapter (s,l)::q -> 
       let chapnum = count.(0) in
-      begin
+      if chapnum >= min_chap then
+      (begin
         count.(0) <- count.(0) + 1;
         count.(1) <- 1;
         count.(2) <- 1;
@@ -60,7 +61,9 @@ let parse_to_html ast =
       end;
       let str = aux "" l in
       let new_line = Printf.sprintf "<h1>Chapter %i : %s</h1><br/>\n" chapnum s in
-      aux (acc^new_line^str) q 
+      aux (acc^new_line^str) q)
+    else 
+      aux acc q
     | Section (s,l)::q -> 
       let chapnum,secnum = count.(0),count.(1) in
       begin
