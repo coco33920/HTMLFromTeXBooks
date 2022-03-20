@@ -1,4 +1,7 @@
 \documentclass{article}
+\newcommand{\sep}{\begin{center}
+  \boldmath $\ast$~$\ast$~$\ast$
+\end{center}} 
 \usepackage{babel}
 Hello 
 \begin{document}
