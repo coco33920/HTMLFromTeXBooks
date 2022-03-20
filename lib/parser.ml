@@ -17,7 +17,7 @@ type structure =  (*OK*)
   | Chapter of string * structure list 
 
 let preamble = Hashtbl.create 1;;
-
+let commands = Hashtbl.create 1;;
 
 let parse_to_html ?(min_chap=1) ast= 
   let count = [|1;1;1;1|] in
@@ -37,7 +37,13 @@ let parse_to_html ?(min_chap=1) ast=
         | "sep" -> "<div class=\"center\"><b>***</b></div>"
         | "item" -> "·"
         | "newline" -> "<br/>\n"
-        | _ -> "")
+        | "ast" -> "*"
+        | e ->
+          (try 
+            let structure = Hashtbl.find commands e in 
+            let str = aux ~write:write acc structure 
+            in str 
+          with _ -> ""))
       in let new_acc = if write then acc^new_line^"\n" else ""
       in aux ~write:write new_acc q
     | OneArgCmd (s,_,l)::q -> 
@@ -50,10 +56,16 @@ let parse_to_html ?(min_chap=1) ast=
         | "item" -> "·"
         | "sep" -> "<div class=\"center\"><b>***</b></div>"
         | "newline" -> "<br/>\n"
+        | "ast" -> "*"
         | "textit" -> (Printf.sprintf "<i>%s</i>" str) 
         | "textbf" -> (Printf.sprintf "<b>%s</b>" str)
         | "url" -> (Printf.sprintf "<a href=\"%s\">%s</a>" (Str.global_replace (Str.regexp "\n") "" str) str)
-        | _ -> str)
+        | e ->
+          (try 
+            let structure = Hashtbl.find commands e in 
+            let str = aux ~write:write acc structure 
+            in str 
+          with _ -> ""))
       in let new_acc = if write then acc^(new_line) else ""
       in aux ~write:write new_acc q
     | Chapter (s,l)::q -> 
@@ -109,7 +121,7 @@ let parse_to_html ?(min_chap=1) ast=
 let prepare_body name str =
   let line = "<title>" ^ name ^ "</title>\n"
   in let line = line ^ "<body>\n"
-  in let line = line ^ "<style>\n.center {\nmargun:auto;\ntext-align:center;\n}\n </style>"
+  in let line = line ^ "<style>\n.center {\nmargin:auto;\ntext-align:center;\n}\n </style>"
   in let line = line ^ "<div class=\"center\">\n" 
   in let line = line ^ (Printf.sprintf "<h1>%s</h1>\n" name)
   in let line = line ^ "</div>\n"
@@ -118,11 +130,15 @@ let prepare_body name str =
   in line;;
 
 (*TODO: prendre en compte les nested cmd pour éviter les }} rémanent*)
-let rec parse_interior_of_an_accolade list_of_chars acc = 
+let parse_interior_of_an_accolade list_of_chars acc = 
+  let stack = Stack.create () in
+  let rec parse list_of_chars acc  =
   match list_of_chars with 
     | [] -> acc,[]
-    | t::q when t='}' -> acc,q
-    | t::q -> parse_interior_of_an_accolade q (acc^(String.make 1 t));;
+    | t::q when t='{' -> Stack.push t stack; parse q (acc^(String.make 1 t)) 
+    | t::q when t='}' -> if Stack.is_empty stack then acc,q else (Stack.pop stack |> ignore; parse q (acc^(String.make 1 t))) 
+    | t::q -> parse q (acc^(String.make 1 t))
+  in parse list_of_chars acc;;
 
 let rec parse_arguments list_of_chars current_acc acc = 
   match list_of_chars with
@@ -153,6 +169,7 @@ let parse_command list_of_chars =
         | MultipleCmd(b,e,c) -> MultipleCmd(b,e@a,c))
       in parse_command_rec q acc
       | t::q when (t='\n' || t=' ') -> acc,q
+      | t::q when (t='$') -> acc,q
       | t::q -> match acc with
         | NullCommand -> parse_command_rec q (AtomCmd ((String.make 1 t),[]))
         | AtomCmd (b,_) -> parse_command_rec q (AtomCmd ((b^(String.make 1 t),[])))
@@ -165,6 +182,9 @@ let parse_command list_of_chars =
 
 let append_line str q =
   match (String.trim (str)) with
+    | "$" -> q
+    | "~" -> q
+    | "~$" -> q
     | "" -> q
     | e -> Line(e)::q
 
@@ -206,13 +226,7 @@ let separate_preamble lst =
       | [] -> List.rev a0,List.rev a1 
   in iter lst [] [];;
 
-let rec read_preamble ast = 
-  match ast with
-    | [] -> ()
-    | OneArgCmd (s,_,(Line s1)::_)::q when (s="documentclass") -> Hashtbl.add preamble "type" s1; read_preamble q
-    | OneArgCmd (s,_,(Line s1)::_)::q when (s="input") -> Hashtbl.add preamble "glossary" s1; read_preamble q
-    | _::q -> read_preamble q;;
- 
+
 let calculate_environments lst =
   let rec extract_env acc lst = 
     match lst with 
@@ -224,6 +238,22 @@ let calculate_environments lst =
       | (OneArgCmd (s,_,_))::q when (String.equal s "end") -> acc,q
       | e::q -> extract_env (e::acc) q
   in let a,_ = extract_env [] lst in a;;
+
+let rec read_preamble ast = 
+  match ast with
+    | [] -> ()
+    | OneArgCmd (s,_,(Line s1)::_)::q when (s="documentclass") -> Hashtbl.add preamble "type" s1; read_preamble q
+    | OneArgCmd (s,_,(Line s1)::_)::q when (s="input") -> Hashtbl.add preamble "glossary" s1; read_preamble q
+    | OneArgCmd (s,_,(Line s1)::_)::q when (s="title") -> Hashtbl.add preamble "title" s1; read_preamble q
+    | OneArgCmd (s,_,(Line s1)::_)::q when (s="author") -> Hashtbl.add preamble "author" s1; read_preamble q
+    | MultipleArgCmd (s,_,l)::q when (s="newcommand") ->
+      (match l with
+        | [AtomicCmd (s,_)]::n::_ when not (s="sep")
+          -> let env = calculate_environments n 
+            in Hashtbl.add commands s env; read_preamble q
+        | _ -> read_preamble q)
+    | _::q -> read_preamble q;;
+ 
 
 let separate_sections lst = 
   let tab = [|false;false;false;false|] in
