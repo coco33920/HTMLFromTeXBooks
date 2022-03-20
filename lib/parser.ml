@@ -65,7 +65,7 @@ let parse_to_html ?(min_chap=1) ast=
             (match l with 
               | [] -> ""
               | Line s::_ -> 
-                let name,_ = recognize_gls s in Printf.sprintf "<a href=\"#%s\">%s</a>" s name
+                let name,_ = recognize_gls s in Printf.sprintf "<a href=\"#%s\">%s</a> " s name
               | _::_ -> "")
         | "textit" -> (Printf.sprintf "<i>%s</i>" str) 
         | "textbf" -> (Printf.sprintf "<b>%s</b>" str)
