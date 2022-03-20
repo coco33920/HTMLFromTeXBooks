@@ -18,6 +18,7 @@ type structure =  (*OK*)
 
 
 let parse_to_html ast = 
+  let count = [|1;1;1;1|] in
   let rec aux acc ast = 
   match ast with
     | [] -> acc
@@ -50,20 +51,42 @@ let parse_to_html ast =
         | _ -> str)
       in aux (acc^new_line) q
     | Chapter (s,l)::q -> 
+      let chapnum = count.(0) in
+      begin
+        count.(0) <- count.(0) + 1;
+        count.(1) <- 1;
+        count.(2) <- 1;
+        count.(3) <- 1;
+      end;
       let str = aux "" l in
-      let new_line = Printf.sprintf "<h1>Chapter %s</h1><br/>\n" s in
+      let new_line = Printf.sprintf "<h1>Chapter %i : %s</h1><br/>\n" chapnum s in
       aux (acc^new_line^str) q 
     | Section (s,l)::q -> 
+      let chapnum,secnum = count.(0),count.(1) in
+      begin
+        count.(1) <- count.(1) + 1;
+        count.(2) <- 1;
+        count.(3) <- 1;
+      end;
       let str = aux "" l in
-      let new_line = Printf.sprintf "<h2>Section %s</h2><br/>\n" s in
+      let new_line = Printf.sprintf "<h2>Section %i.%i : %s</h2><br/>\n" chapnum secnum s in
       aux (acc^new_line^str) q
     | Subsection (s,l)::q -> 
+      let chapnum,secnum,ssecnum = count.(0),count.(1),count.(2) in
+      begin
+        count.(2) <- count.(2) + 1;
+        count.(3) <- 1;
+      end;
       let str = aux "" l in
-      let new_line = Printf.sprintf "<h3>Subsection %s</h3><br/>\n" s in
+      let new_line = Printf.sprintf "<h3>Subsection %i.%i.%i : %s</h3><br/>\n" chapnum secnum ssecnum s in
       aux (acc^new_line^str) q
-    | Subsubsection (s,l)::q -> 
+    | Subsubsection (s,l)::q ->
+      let chapnum,secnum,ssecnum,sssecnum = count.(0),count.(1),count.(2),count.(3) in
+      begin
+        count.(3) <- count.(3) + 1;
+      end;
       let str = aux "" l in
-      let new_line = Printf.sprintf "<h4>Subsubsection %s : </h1><br/>\n" s in
+      let new_line = Printf.sprintf "<h4>Subsubsection %i.%i.%i.%i : %s</h4><br/>\n" chapnum secnum ssecnum sssecnum s in
       aux (acc^new_line^str) q
     | Env (s,l)::q -> 
       let str = aux "" l in 
