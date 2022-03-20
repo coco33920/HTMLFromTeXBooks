@@ -11,7 +11,6 @@ let spec = [
   ("--name", Arg.Set_string name, "Name of the file");
   ("--start-chapter", Arg.Set_int start_chapter, "Starting chapters");
   ("--chapter", Arg.Set_int chapter, "compile only a chapter");
-  ("--use-glossary", Arg.Set_string glossary_name, "specify the glossary")
 ]
 
 let execute_command file name outname start_chapter =
@@ -63,7 +62,7 @@ let detect_a_file () =
   | None -> ""
   | Some v -> (Sys.readdir ".").(v);; 
 
-let msg = "htmlfromtex --input <file> --output <out_file> [--use-glossary <glossary> | --name <name> | --start-chapter <chapter>]";;
+let msg = "htmlfromtex --input <file> --output <out_file> [| --name <name> | --start-chapter <chapter>]";;
 let _ =
   Arg.parse spec (fun _ -> ()) msg;
   let default_name,_ = load_configuration () in
