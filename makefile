@@ -1,8 +1,3 @@
-latex-documentation:
-	ocamldoc -t "HTMLFromTeXBooks Documentation" -d docs/ -latex lib/*.ml
-	pdflatex ocamldoc.out 
-	mv ocamldoc.pdf docs/latex/doc.pdf 
-	rm ocamldoc.aux ocamldoc.log ocamldoc.out ocamldoc.sty ocamldoc.toc
 html-documentation:
 	dune build @doc-private
 	chmod -R 776 _build/default/_doc/*
@@ -15,7 +10,5 @@ documentation:
 	dune clean
 	rm -r docs/ 2> /dev/null
 	mkdir docs/
-	mkdir docs/latex
-	make latex-documentation
 	make html-documentation
 .IGNORE: documentation
