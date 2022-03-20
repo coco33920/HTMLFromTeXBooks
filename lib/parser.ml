@@ -30,27 +30,48 @@ let parse_to_html ast =
     | [] -> acc
     | Nul::q -> aux acc q
     | Line s::q -> 
-      let line= Printf.sprintf "<span>%s</span>\n" s
+      let line= Printf.sprintf "%s\n" s
       in aux (acc^line) q
     | AtomicCmd s::q ->
       let new_line = (match s with
-        | "par" -> "<br>\n"
-        | "bigskip" -> "</p><br><br>\n<p>"
+        | "par" -> "<br/>\n"
+        | "bigskip" -> "</p>\n\n<p>\n"
+        | "\\" -> "<br/>\n"
         | "printglossaries" -> ""
         | "item" -> "·"
+        | "newline" -> "<br/>\n"
         | _ -> "")
       in aux (acc^new_line^"\n") q
     | OneArgCmd (s,l)::q -> 
       let str = aux "" l in 
       let new_line = (match s with
-        | "par" -> "<br>\n"
-        | "bigskip" -> "</p><br><br>\n<p>\n"
+        | "par" -> "<br/>\n"
+        | "bigskip" -> "</p>\n\n<p>\n"
+        | "\\" -> "<br/>\n"
         | "printglossaries" -> ""
         | "item" -> "·"
+        | "newline" -> "<br/>\n"
         | "textit" -> (Printf.sprintf "<i>%s</i>" str) 
         | "textbf" -> (Printf.sprintf "<b>%s</b>" str)
+        | "url" -> (Printf.sprintf "<a href=\"%s\">%s</a>" (Str.global_replace (Str.regexp "\n") "" str) str)
         | _ -> str)
       in aux (acc^new_line) q
+    | Chapter (s,l)::q -> 
+      let str = aux "" l in
+      let new_line = Printf.sprintf "<h1>Chapter %s</h1><br/>\n" s in
+      aux (acc^new_line^str) q 
+    | Section (s,l)::q -> 
+      let str = aux "" l in
+      let new_line = Printf.sprintf "<h2>Section %s</h2><br/>\n" s in
+      aux (acc^new_line^str) q
+    | Subsection (s,l)::q -> 
+      let str = aux "" l in
+      let new_line = Printf.sprintf "<h3>Subsection %s</h3><br/>\n" s in
+      aux (acc^new_line^str) q
+    | Subsubsection (s,l)::q -> 
+      let str = aux "" l in
+      let new_line = Printf.sprintf "<h4>Subsubsection %s : </h1><br/>\n" s in
+      aux (acc^new_line^str) q
     | Env (s,l)::q -> 
       let str = aux "" l in 
       let new_line = (match s with
@@ -76,7 +97,7 @@ Parse_command lit les chars
   Quand on rencontre le dernier } => on renvoie
 *)
 
-
+(*prendre en compte les nested cmd pour éviter les }} rémanent*)
 let rec parse_interior_of_an_accolade list_of_chars acc = 
   match list_of_chars with 
     | [] -> acc,[]
