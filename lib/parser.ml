@@ -16,7 +16,7 @@ type structure =  (*OK*)
   | Subsubsection of string * structure list
   | Subsection of string * structure list 
   | Section of string * structure list 
-  | Chapter of string * structure list 
+  | Chapter of string * structure list
 
 let preamble = Hashtbl.create 1;;
 let commands = Hashtbl.create 1;;
@@ -289,6 +289,8 @@ and parse_nested_commands ast_list =
   in let a = parse "" [] (string_to_list str)
   in let a = parse_nested_commands a
   in List.rev a;; 
+
+
 
 (*Preamble / Document*)
 
