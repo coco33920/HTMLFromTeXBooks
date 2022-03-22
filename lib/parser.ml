@@ -23,7 +23,7 @@ let commands = Hashtbl.create 1;;
 
 let parse_to_html ?(min_chap=1) ast= 
   let count = [|1;1;1;1|] in
-  let rec aux ?(write=true) acc ast = 
+  let rec aux ?(write=false) acc ast = 
   match ast with
     | [] -> acc
     | Nul::q -> aux acc q
