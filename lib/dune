@@ -2,4 +2,4 @@
 
 (library
  (name htmlfromtexbooks)
- (libraries str netstring))
+ (libraries str))

@@ -1,11 +1,11 @@
 \documentclass{article}
-\newcommand{\sep}{\begin{center}
-  \boldmath $\ast$~$\ast$~$\ast$
-\end{center}} 
 \usepackage{babel}
 Hello 
 \begin{document}
 tralalala
+\bigskip
+This is an integral 
+$\int^a_b f(x) \mathrm{d}x$
 \begin{center}
 au center
 \end{center}

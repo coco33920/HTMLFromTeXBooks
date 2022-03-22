@@ -2,7 +2,7 @@ open Parser
 open Glossary
 open Utils
 
-let url_encoded_str s = Netencoding.Url.encode s;;
+let url_encoded_str s = s;;
 
 let print_table_of_content ast min_chap =
   let count = [|1;1;1;1|] in
@@ -58,9 +58,9 @@ let print_table_of_content ast min_chap =
       | _::q -> aux acc q
   in (aux "" ast);;
 
-  let parse_to_html ?(min_chap=1) ast= 
+  let parse_to_html ?(min_chap=1) write_before ast= 
   let count = [|1;1;1;1|] in
-  let rec aux ?(write=false) acc ast = 
+  let rec aux ?(write=write_before) acc ast = 
   match ast with
     | [] -> acc
     | Nul::q -> aux acc q
@@ -209,9 +209,10 @@ let prepare_body name str toc =
     doc;;
 
 
-let print_file_in_html ?(min_chap=1) file outname =
+let print_file_in_html ?(min_chap=1) ?(write_before=false) file outname =
   let a = pre_parse_file file in
-  let html = parse_to_html ~min_chap:min_chap a in 
+  let html = parse_to_html ~min_chap:min_chap write_before a in 
   let toc = print_table_of_content a min_chap in
-  prepare_body (Hashtbl.find preamble "title") html toc
+  let name = try Hashtbl.find preamble "title" with _ -> "Generic" in
+  prepare_body name html toc
   |> write_to_file outname;;

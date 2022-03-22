@@ -94,7 +94,7 @@ let rec parse_string str =
 let rec parse current_acc acc lst = 
       match lst with
         | [] -> append_line current_acc acc
-        | t::q when t='$' -> let a,q2 = parse_math q in parse "" (a::acc) q2
+        | t::q when t='$' -> let a,q2 = parse_math q in parse "" (a::(append_line current_acc acc)) q2
         | t::q when t='\\' -> 
           let cmd,l = parse_command q in 
           parse "" (Cmd(cmd)::(append_line current_acc acc)) l
