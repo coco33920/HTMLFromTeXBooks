@@ -140,16 +140,16 @@ let calculate_environments lst =
       let env = Env (s1,List.rev env) in
       extract_env (env::acc) l
     | (OneArgCmd (s,_,_))::q when (String.equal s "end") -> acc,q
-    | Chapter(s,l)::q -> let l2,q2 = extract_env acc l 
+    | Chapter(s,l)::q -> let l2,q2 = extract_env [] l 
       in let l2 = List.rev l2
       in extract_env ((Chapter(s,l2@q2))::acc) q
-    | Section(s,l)::q -> let l2,q2 = extract_env acc l 
+    | Section(s,l)::q -> let l2,q2 = extract_env [] l 
       in let l2 = List.rev l2
       in extract_env ((Section(s,l2@q2))::acc) q
-    | Subsection(s,l)::q -> let l2,q2 = extract_env acc l 
+    | Subsection(s,l)::q -> let l2,q2 = extract_env [] l 
       in let l2 = List.rev l2
       in extract_env ((Section(s,l2@q2))::acc) q
-    | Subsubsection(s,l)::q -> let l2,q2 = extract_env acc l 
+    | Subsubsection(s,l)::q -> let l2,q2 = extract_env [] l 
       in let l2 = List.rev l2
       in extract_env ((Section(s,l2@q2))::acc) q
     | e::q -> extract_env (e::acc) q
@@ -179,30 +179,30 @@ let separate_sections lst =
     | (OneArgCmd (s,e,(Line s1)::_))::q when (s="chapter" || s="chapter*")  -> 
       if tab.(0) = true then (tab.(0) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
       else
+        (tab.(0) <- true;
         let a,l = extract_section [] q in
         let chap = Chapter(s1,List.rev a) in
-        tab.(0) <- true;
-        extract_section (chap::acc) l
+        extract_section (chap::acc) l)
     | (OneArgCmd (s,e,(Line s1)::_))::q when (s="section" || s="section*")  -> 
       if tab.(1) = true then (tab.(1) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
       else
+        (tab.(1) <- true;
         let a,l = extract_section [] q in
         let chap = Section(s1,List.rev a) in
-        tab.(1) <- true;
-        extract_section (chap::acc) l
+        extract_section (chap::acc) l)
     | (OneArgCmd (s,e,(Line s1)::_))::q when (s="subsection" || s="subsection*") -> 
       if tab.(2) = true then (tab.(2) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
       else
+        (tab.(2) <- true;
         let a,l = extract_section [] q in
         let chap = Subsection(s1,List.rev a) in
-        tab.(2) <- true;
-        extract_section (chap::acc) l
+        extract_section (chap::acc) l);
     | (OneArgCmd (s,e,(Line s1)::_))::q when (s="subsubsection" || s="subsubsection*")  -> 
       if tab.(3) = true then (tab.(3) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
       else
+        (tab.(3) <- true;
         let a,l = extract_section [] q in
         let chap = Subsubsection(s1,List.rev a) in
-        tab.(3) <- true;
-        extract_section (chap::acc) l
+        extract_section (chap::acc) l)
     | e::q -> extract_section (e::acc) q
   in let a,_ = extract_section [] lst in List.rev a;;

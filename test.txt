@@ -5,7 +5,8 @@ Hello
 \chapter{hello}
 tralalala
 \bigskip
-This is an integral 
+This is an integral
+\chapter{test}
 \begin{align*}
 2x &= 4 \\
 3y &= 3
