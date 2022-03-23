@@ -30,7 +30,7 @@ behaviour with the `--write` argument
 ```bash
 htmlfromtexbooks --write
 ```
-A full usage breakdown will be quickly made
+A full usage breakdown is available [here](https://doc.nwa2coco.fr/usage.html)
 
 ## Install
 
