@@ -1,3 +1,6 @@
+(**Main module for parsing string to an AST representing LaTeX Books*)
+
+
 open Utils
 
 (**Commande type : an internal used in the first phase of the parsing*)
@@ -25,7 +28,7 @@ type structure =
 let preamble = Hashtbl.create 1;;
 let commands = Hashtbl.create 1;;
 
-(**Parse an accolade for the first time (command reading)*)
+(**Parses an accolade for the first time (command reading)*)
 let parse_interior_of_an_accolade list_of_chars acc = 
   let stack = Stack.create () in
   let rec parse list_of_chars acc  =
@@ -36,7 +39,7 @@ let parse_interior_of_an_accolade list_of_chars acc =
     | t::q -> parse q (acc^(String.make 1 t))
   in parse list_of_chars acc;;
 
-(**Parse arguments of a function [colorlinks,12pt] to a list of string ["colorlinks","12pt"]*)
+(**Parses arguments of a function [colorlinks,12pt] to a list of string ["colorlinks","12pt"]*)
 let rec parse_arguments list_of_chars current_acc acc = 
   match list_of_chars with
   | [] -> current_acc::acc,[]
@@ -45,7 +48,7 @@ let rec parse_arguments list_of_chars current_acc acc =
   | t::q when t=' ' -> parse_arguments q current_acc acc
   | t::q -> parse_arguments q (current_acc^(String.make 1 t)) acc;;
 
-(**Parse a command recursively, called when a \ is detected in the parsing of a string*)
+(**Parses a command recursively, called when a \ is detected in the parsing of a string*)
 let parse_command list_of_chars =
   let rec parse_command_rec list_of_chars acc = 
     match list_of_chars with
@@ -78,13 +81,13 @@ let parse_command list_of_chars =
   | MultipleCmd (s,e,l2) -> MultipleCmd (s,e,List.rev l2),l
   | e -> e,l;;
 
-(**Append a line to a list if the line is not empty*)
+(**Appends a line to a list if the line is not empty*)
 let append_line str q =
   match (String.trim (str)) with
   | "" -> q
   | e -> Line(e)::q
 
-(**Parse inline $$ math*)  
+(**Parses inline $$ math*)  
 let parse_math l = 
   let rec parse acc l = 
     match l with

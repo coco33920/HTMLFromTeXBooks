@@ -1,3 +1,6 @@
+(**Various utilities module*)
+
+
 (**Implementation of 4.13's OCaml String.starts_with command to be backward compatible*)
 let string_starts_with prefix str =
   if String.length prefix > String.length str then false else 

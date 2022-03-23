@@ -1,3 +1,6 @@
+(**Unparsing to generate math latex to be interpreted on the web*)
+
+
 open Parser
 
 (**Generate a command with its name and list of parameters*)
