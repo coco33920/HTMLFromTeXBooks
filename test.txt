@@ -1,11 +1,14 @@
 \documentclass{article}
-\newcommand{\sep}{\begin{center}
-  \boldmath $\ast$~$\ast$~$\ast$
-\end{center}} 
 \usepackage{babel}
 Hello 
 \begin{document}
 tralalala
+\bigskip
+This is an integral 
+\begin{align*}
+2x &= 4 \\
+3y &= 3
+\end{align*}
 \begin{center}
 au center
 \end{center}

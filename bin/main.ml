@@ -14,7 +14,7 @@ let spec = [
 ]
 
 let execute_command file outname start_chapter =
-  Htmlfromtexbooks.Parser.print_file_in_html ~min_chap:start_chapter file outname;;
+  Htmlfromtexbooks.Htmlgen.print_file_in_html ~min_chap:start_chapter file outname;;
 
 let parse_filename file outname start_chapter = 
   if not (Sys.file_exists file) then (Printf.printf "The %s file do not exists" file; exit 2)
