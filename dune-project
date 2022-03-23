@@ -1,5 +1,5 @@
 (lang dune 2.9)
-(version 3.3.1)
+(version 3.3.2)
 
 (name htmlfromtexbooks)
 
