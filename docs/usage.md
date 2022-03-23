@@ -58,10 +58,10 @@ htmlfromtexbooks --input agh.tex --output agh.html --name "A Galactic HRT"
 This will put the name "A Galactic HRT" in the correct places.
 
 ### Glossary
-To enable the use of a glossary the option is `--use-glossary <glossary>`
+The glossary is read from an `\input{}` command on LaTeX
 example
 ```bash 
-htmlfromtexbooks --input agh.tex --use-glossary glossary.tex --name "A Galactic HRT" --output agh.html
+htmlfromtexbooks --input agh.tex --name "A Galactic HRT" --output agh.html
 ```
 Will use the `glossary.tex` file to provide entries to parse `\gls{}` commands. Use the 
 name "A Galactic HRT" and prints the result to the agh.html file
@@ -84,5 +84,5 @@ htmlfromtexbooks --input agh.tex --output agh.html --start-chapter 2
 ### AGH
 The full command line compilation for agh/agh-current/agh-french is
 ```bash
-htmlfromtexbooks --input agh.tex --output web/agh.html --use-glossary glossary.tex --name "A Galactic HRT" --start-chapter 2
+htmlfromtexbooks --input agh.tex --output web/agh.html --start-chapter 2
 ```
