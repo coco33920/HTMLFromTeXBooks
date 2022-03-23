@@ -1,3 +1,6 @@
+(**Module initializing eventual glossaries*)
+
+
 let glossaries = Hashtbl.create 1;;
 
 (** Alias for Sys.file_exists *)
@@ -81,6 +84,7 @@ let prints_glossary () =
     in let line = aux line (List.of_seq (Hashtbl.to_seq glossaries))
     in line^"</div>\n";; 
 
+(**Takes a glossary descriptor and returns its name and definition*)
 let recognize_gls name = 
   try 
     Hashtbl.find glossaries name;
