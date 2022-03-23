@@ -5,6 +5,8 @@
 <a href="https://github.com/coco33920/HTMLFromTeXBooks" title="Go to GitHub repo"><img src="https://img.shields.io/static/v1?label=coco33920&message=HTMLFromTeXBooks&color=55cdfc&logo=github&style=for-the-badge" alt="coco33920 - HTMLFromTeXBooks"></a>
 <a href="https://github.com/coco33920/HTMLFromTeXBooks/releases/latest/"><img src="https://img.shields.io/github/release/coco33920/HTMLFromTeXBooks?include_prereleases=&sort=semver&color=55cdfc&style=for-the-badge" alt="GitHub release"></a>
 <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-55cdfc?style=for-the-badge" alt="License - MIT"></a>
+
+<a href="https://coco33920.github.io/HTMLFromTeXBooks/"><img src="https://img.shields.io/badge/View-Documentation-f7a8d8?style=for-the-badge" alt="View site - GH Pages"></a>
 </div>
 
 
