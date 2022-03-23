@@ -140,6 +140,18 @@ let calculate_environments lst =
         let env = Env (s1,List.rev env) in
         extract_env (env::acc) l
       | (OneArgCmd (s,_,_))::q when (String.equal s "end") -> acc,q
+      | Chapter(s,l)::q -> let l2,q2 = extract_env acc l 
+                           in let l2 = List.rev l2
+                           in extract_env ((Chapter(s,l2@q2))::acc) q
+      | Section(s,l)::q -> let l2,q2 = extract_env acc l 
+                           in let l2 = List.rev l2
+                           in extract_env ((Section(s,l2@q2))::acc) q
+      | Subsection(s,l)::q -> let l2,q2 = extract_env acc l 
+                              in let l2 = List.rev l2
+                              in extract_env ((Section(s,l2@q2))::acc) q
+      | Subsubsection(s,l)::q -> let l2,q2 = extract_env acc l 
+                                 in let l2 = List.rev l2
+                                 in extract_env ((Section(s,l2@q2))::acc) q
       | e::q -> extract_env (e::acc) q
   in let a,_ = extract_env [] lst in a;;
 

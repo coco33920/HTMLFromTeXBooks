@@ -49,5 +49,25 @@ let re_calculate_env ast =
            let ast = List.rev ast
            in let env = Env(s,ast)
            in aux (env::acc) q 
+      | Chapter (s,l)::q 
+        -> let ast = aux [] l in
+           let ast = List.rev ast
+           in let c = Chapter(s,ast)
+           in aux (c::acc) q 
+      | Section (s,l)::q 
+        -> let ast = aux [] l in
+           let ast = List.rev ast
+           in let c = Section(s,ast)
+           in aux (c::acc) q 
+      | Subsection (s,l)::q 
+        -> let ast = aux [] l in
+           let ast = List.rev ast
+           in let c = Subsection(s,ast)
+           in aux (c::acc) q 
+      | Subsubsection (s,l)::q 
+        -> let ast = aux [] l in
+           let ast = List.rev ast
+           in let c = Subsubsection(s,ast)
+           in aux (c::acc) q 
       | e::q -> aux (e::acc) q
   in List.rev (aux [] ast);;

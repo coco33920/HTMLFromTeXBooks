@@ -2,5 +2,3 @@ _build/
 _build/*
 *.py
 *.tex 
-out.html
-repl_utils.ml
