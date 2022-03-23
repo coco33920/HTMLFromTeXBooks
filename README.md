@@ -1,6 +1,18 @@
 # HTMLFromTeXBooks
 A simple command-line tools to generate HTML code from TeX files.
 
+
+<div style="margin:auto; text-align:center;">
+<a href="https://github.com/coco33920/HTMLFromTeXBooks" title="Go to GitHub repo"><img src="https://img.shields.io/static/v1?label=coco33920&message=HTMLFromTeXBooks&color=55cdfc&logo=github&style=for-the-badge" alt="coco33920 - HTMLFromTeXBooks"></a>
+
+<a href="https://github.com/coco33920/HTMLFromTeXBooks/releases/latest/"><img src="https://img.shields.io/github/release/coco33920/HTMLFromTeXBooks?include_prereleases=&sort=semver&color=55cdfc&style=for-the-badge" alt="GitHub release"></a>
+
+</div>
+
+
+
+
+
 ## What is this project
 Welcome to this little project, I decided to make this because I like OCaml and the previous version of it was in Python. This program
 translates TeX Books (simple one like stories kind of book) to HTML. I use this to publish the HTML version of [agh](https://agh.nwa2coco.fr) and to publish chapters written in TeX on ScribbleHub.
