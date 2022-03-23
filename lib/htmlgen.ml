@@ -65,7 +65,6 @@ let parse_to_html ?(min_chap=1) write_before ast=
     | [] -> acc
     | Nul::q -> aux write acc q
     | Line s::q -> 
-      Printf.printf "Line %s Write %b\n" s write;
       let line= if write then Printf.sprintf "%s\n" s else ""
       in aux write (acc^line) q
     | Math s::q ->
@@ -74,7 +73,6 @@ let parse_to_html ?(min_chap=1) write_before ast=
       let line = if write then Printf.sprintf "<img src=\"%s\"/>\n" url else ""
       in aux write (acc^line) q
     | AtomicCmd (s,_)::q ->
-      Printf.printf "Command %s Write %b\n" s write;
       let new_line = (match s with
           | "par" -> "<br/>\n"
           | "bigskip" -> "</p>\n\n<p>\n"
@@ -94,7 +92,6 @@ let parse_to_html ?(min_chap=1) write_before ast=
       in aux write new_acc q
 
     | OneArgCmd (s,_,l)::q -> 
-      Printf.printf "Command %s Write %b\n" s write;
       let str = aux write "" l in 
       let new_line = (match s with
           | "par" -> "<br/>\n"
@@ -124,7 +121,6 @@ let parse_to_html ?(min_chap=1) write_before ast=
       in aux write new_acc q
 
     | Chapter (s,l)::q -> 
-      Printf.printf "Chapter %s %i on %i Write %b\n" s (count.(0)) min_chap write;
       let chapnum = count.(0) in
       begin
         count.(0) <- count.(0) + 1;
@@ -173,7 +169,6 @@ let parse_to_html ?(min_chap=1) write_before ast=
       aux write (acc^new_line^str) q
 
     | Env (s,l)::q -> 
-      Printf.printf "Env %s Writing %b\n" s write;
       let str = aux write "" l in 
       let new_line = (match s with
           | "document" -> str
