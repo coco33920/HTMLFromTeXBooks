@@ -202,7 +202,7 @@ let prepare_body name str toc =
     in read_preamble p;
     let doc = separate_sections doc
     in let doc = calculate_environments doc 
-    in 
+    in let doc = Mathgen.re_calculate_env doc in 
     (match (Hashtbl.find_opt preamble "glossary") with
       | Some s -> init_glossary s
       | None -> (););

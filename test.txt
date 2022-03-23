@@ -5,7 +5,10 @@ Hello
 tralalala
 \bigskip
 This is an integral 
-$\int^a_b f(x) \mathrm{d}x$
+\begin{align*}
+2x &= 4 \\
+3y &= 3
+\end{align*}
 \begin{center}
 au center
 \end{center}
