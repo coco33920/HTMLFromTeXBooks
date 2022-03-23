@@ -1,9 +1,11 @@
+(**Takes the Parsed AST and transforms it into human-readable and valid HTML files*)
+
+
 open Parser 
 open Glossary
 open Utils
 
-let url_encoded_str s = s;;
-
+(**Prints the table of content : all the chapters / section / subsection / subsubsection numeroted*)
 let print_table_of_content ast min_chap =
   let count = [|1;1;1;1|] in
   let rec aux acc ast = 
@@ -58,6 +60,7 @@ let print_table_of_content ast min_chap =
     | _::q -> aux acc q
   in (aux "" ast);;
 
+(**Parses an AST to HTML, @param min_chap : the first chapter to be written, @param write_before : writing before the first valid chapter*)
 let parse_to_html ?(min_chap=1) write_before ast= 
   let count = [|1;1;1;1|] in
   let rec aux write acc ast =
@@ -69,7 +72,6 @@ let parse_to_html ?(min_chap=1) write_before ast=
       in aux write (acc^line) q
     | Math s::q ->
       let url = Printf.sprintf "https://latex.codecogs.com/svg.image?%s"s in
-      let url = url_encoded_str url in
       let line = if write then Printf.sprintf "<img src=\"%s\"/>\n" url else ""
       in aux write (acc^line) q
     | AtomicCmd (s,_)::q ->
@@ -178,7 +180,7 @@ let parse_to_html ?(min_chap=1) write_before ast=
     | _::q -> aux write acc q
   in aux write_before "" ast;;
 
-
+(**Prepare the body of the HTML file, title, body markups, and adds the style, table of contents and body*)
 let prepare_body name str toc =
   let line = "<title>" ^ name ^ "</title>\n"
   in let line = line ^ "<body>\n"
@@ -195,7 +197,7 @@ let prepare_body name str toc =
   in let line = line ^ "</body>"
   in line;;
 
-
+(**Performs the first transformation : from reading the file to rendering it html printing ready*)
 let pre_parse_file file = 
   let str = read_file file in
   let str = String.concat "\n" str in
@@ -211,7 +213,8 @@ let pre_parse_file file =
    | None -> (););
   doc;;
 
-
+(**Writes the HTML translation of the given TeX file in the outfile. @param min_chap is the first chapter to be writen, @param 
+write_before determines if the parser writes what comes before the first valid chapter*)
 let print_file_in_html ?(min_chap=1) ?(write_before=false) file outname =
   let a = pre_parse_file file in
   let html = parse_to_html ~min_chap:min_chap write_before a in 
