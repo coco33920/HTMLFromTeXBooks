@@ -10,9 +10,6 @@
 </div>
 
 
-
-
-
 ## What is this project
 Welcome to this little project, I decided to make this because I like OCaml and the previous version of it was in Python. This program
 translates TeX Books (simple one like stories kind of book) to HTML. I use this to publish the HTML version of [agh](https://agh.nwa2coco.fr) and to publish chapters written in TeX on ScribbleHub.
@@ -21,6 +18,19 @@ translates TeX Books (simple one like stories kind of book) to HTML. I use this 
 The purpose of this project **is not** and never will be a kind of "TeX To HTML" compiler, I do *not* intend to implement the full TeX
 and LaTeX specification. This is a tool mainly done *for me* for my usage, that is publishing my book on ScribbleHub and the web. I'm sure you can find real compilers if you want to support 
 the full specification of TeX and LaTeX
+
+## Usage
+The tool automatically detect the first tex file which's name's not "glossary.tex", scrapes the name and eventual glossary
+input from the preamble and throw out an html file so the easiest way to use it is just
+```bash
+htmlfromtexbooks
+```
+by default it only prints after the first (or the nth depending on the command line args) chapter was read you can change that 
+behaviour with the `--write` argument
+```bash
+htmlfromtexbooks
+```
+A full usage breakdown will be quickly made
 
 ## Install
 
