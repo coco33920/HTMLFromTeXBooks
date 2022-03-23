@@ -1,13 +1,13 @@
 open Parser
 
+(**Generate a command with its name and list of parameters*)
 let generate_latex_command s l = 
   let line = "\\"^s in
   let args = String.concat "," l in 
   let line = if args="" then line else Printf.sprintf "%s[%s]" line args in
   line;;
 
-
-
+(**Generate latex again for commands*)
 let generate_latex l = 
   let rec unparse acc l = 
     match l with 
@@ -28,10 +28,7 @@ let generate_latex l =
     | _::q -> unparse acc q
   in unparse [] l;;
 
-let env_de_latexer env = 
-  match env with
-  | e -> e;;
-
+(**Recalculate the environments accounting align,align*,equation,equation* *)
 let re_calculate_env ast =
   let rec aux acc ast = 
     match ast with
