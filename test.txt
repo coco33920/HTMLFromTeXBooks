@@ -2,6 +2,7 @@
 \usepackage{babel}
 Hello 
 \begin{document}
+\chapter{hello}
 tralalala
 \bigskip
 This is an integral 
