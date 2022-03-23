@@ -4,6 +4,7 @@ let glossary_name = ref ""
 let name = ref ""
 let start_chapter = ref (1) 
 let chapter = ref (-1)
+let writing = ref false
 let outname = ref ""
 let spec = [
   ("--input", Arg.Set_string filename, "specify the input to the program");
@@ -11,14 +12,15 @@ let spec = [
   ("--name", Arg.Set_string name, "Name of the file");
   ("--start-chapter", Arg.Set_int start_chapter, "Starting chapters");
   ("--chapter", Arg.Set_int chapter, "compile only a chapter");
+  ("--writing", Arg.Set writing, "writing before the first chapter")
 ]
 
-let execute_command file outname start_chapter =
-  Htmlfromtexbooks.Htmlgen.print_file_in_html ~min_chap:start_chapter file outname;;
+let execute_command file outname start_chapter writing =
+  Htmlfromtexbooks.Htmlgen.print_file_in_html ~min_chap:start_chapter ~write_before:writing file outname;;
 
-let parse_filename file outname start_chapter = 
+let parse_filename file outname start_chapter writing = 
   if not (Sys.file_exists file) then (Printf.printf "The %s file do not exists" file; exit 2)
-  else execute_command file outname start_chapter;;
+  else execute_command file outname start_chapter writing;;
 
 let find_opt (a : 'a -> bool) (arr: 'a array)  = 
   let arr = Array.to_list arr in
@@ -53,4 +55,4 @@ let _ =
     Printf.printf "output filename has been automatically generated to be %s\n" !outname;
   else
     Printf.printf "output filename is %s\n" !outname;
-  parse_filename !filename !outname !start_chapter;;
+  parse_filename !filename !outname !start_chapter !writing;;
