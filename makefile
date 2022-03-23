@@ -20,7 +20,7 @@ html-documentation:
 	dune clean
 documentation:
 	dune clean
-	rm -r docs/ 2> /dev/null
-	mkdir docs/
+	rm -r docs/doc/ 2> /dev/null
+	mkdir docs/doc/
 	make html-documentation
 .IGNORE: documentation
