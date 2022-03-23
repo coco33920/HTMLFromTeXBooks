@@ -185,29 +185,29 @@ let separate_sections lst =
       if tab.(0) = true then (tab.(0) <- false; tab.(1) <- false; tab.(2) <- false; tab.(3) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
       else
         (tab.(0) <- true;
-        let a,l = extract_section [] q in
-        let chap = Chapter(s1,List.rev a) in
-        extract_section (chap::acc) l)
+         let a,l = extract_section [] q in
+         let chap = Chapter(s1,List.rev a) in
+         extract_section (chap::acc) l)
     | (OneArgCmd (s,e,(Line s1)::_))::q when (s="section" || s="section*")  -> 
       if tab.(1) = true then (tab.(1) <- false; tab.(2) <- false; tab.(3) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
       else
         (tab.(1) <- true;
-        let a,l = extract_section [] q in
-        let chap = Section(s1,List.rev a) in
-        extract_section (chap::acc) l)
+         let a,l = extract_section [] q in
+         let chap = Section(s1,List.rev a) in
+         extract_section (chap::acc) l)
     | (OneArgCmd (s,e,(Line s1)::_))::q when (s="subsection" || s="subsection*") -> 
       if tab.(2) = true then (tab.(2) <- false; tab.(3) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
       else
         (tab.(2) <- true;
-        let a,l = extract_section [] q in
-        let chap = Subsection(s1,List.rev a) in
-        extract_section (chap::acc) l);
+         let a,l = extract_section [] q in
+         let chap = Subsection(s1,List.rev a) in
+         extract_section (chap::acc) l);
     | (OneArgCmd (s,e,(Line s1)::_))::q when (s="subsubsection" || s="subsubsection*")  -> 
       if tab.(3) = true then (tab.(3) <- false; acc,(OneArgCmd (s,e,(Line s1)::[]))::q)
       else
         (tab.(3) <- true;
-        let a,l = extract_section [] q in
-        let chap = Subsubsection(s1,List.rev a) in
-        extract_section (chap::acc) l)
+         let a,l = extract_section [] q in
+         let chap = Subsubsection(s1,List.rev a) in
+         extract_section (chap::acc) l)
     | e::q -> extract_section (e::acc) q
   in let a,_ = extract_section [] lst in List.rev a;;

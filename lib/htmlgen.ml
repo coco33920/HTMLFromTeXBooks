@@ -214,7 +214,7 @@ let pre_parse_file file =
   doc;;
 
 (**Writes the HTML translation of the given TeX file in the outfile. @param min_chap is the first chapter to be writen, @param 
-write_before determines if the parser writes what comes before the first valid chapter*)
+   write_before determines if the parser writes what comes before the first valid chapter*)
 let print_file_in_html ?(min_chap=1) ?(write_before=false) file outname =
   let a = pre_parse_file file in
   let html = parse_to_html ~min_chap:min_chap write_before a in 
