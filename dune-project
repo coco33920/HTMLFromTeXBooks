@@ -16,7 +16,5 @@
 (package
  (name htmlfromtexbooks)
  (synopsis "From TeX To Human-Readable HTML")
- (description "A simple command line tool to generate human-readable HTML from a LaTeX Book/Article")
+ (description "A simple command line tool to generate human-readable HTML from a LaTeX Book")
  (depends ocaml dune))
-
-; See the complete stanza docs at https://dune.readthedocs.io/en/stable/dune-files.html#dune-project

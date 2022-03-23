@@ -3,11 +3,11 @@ opam-version: "2.0"
 version: "3.3.1"
 synopsis: "From TeX To Human-Readable HTML"
 description:
-  "A simple command line tool to generate human-readable HTML from a LaTeX Book/Article"
+  "A simple command line tool to generate human-readable HTML from a LaTeX Book"
 maintainer: ["Charlotte THOMAS"]
 authors: ["Charlotte THOMAS"]
 license: "MIT"
-homepage: "https://github.com/coco33920/HTMLFromTeXBooks"
+homepage: "https://doc.nwa2coco.fr"
 bug-reports: "https://github.com/coco33920/HTMLFromTeXBooks/issues"
 depends: [
   "ocaml" {>= "4.08.0"}
