@@ -1,12 +1,12 @@
 (lang dune 2.9)
+(version 3.3.1)
 
 (name htmlfromtexbooks)
 
-(generate_opam_files true)
+(generate_opam_files false)
 
 (source
  (github coco33920/HTMLFromTeXBooks))
-
 (authors "Charlotte THOMAS")
 
 (maintainers "Charlotte THOMAS")
