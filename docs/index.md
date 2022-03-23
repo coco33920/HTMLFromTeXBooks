@@ -10,9 +10,6 @@
 </div>
 
 
-
-
-
 ## What is this project
 Welcome to this little project, I decided to make this because I like OCaml and the previous version of it was in Python. This program
 translates TeX Books (simple one like stories kind of book) to HTML. I use this to publish the HTML version of [agh](https://agh.nwa2coco.fr) and to publish chapters written in TeX on ScribbleHub.
