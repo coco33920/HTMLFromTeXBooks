@@ -42,6 +42,8 @@ let re_calculate_env ast =
         -> aux (Math(Printf.sprintf "\\begin{align*}%s\\end{align*}" (generate_latex n))::acc) q
       | Env (s,n)::q when s="equation" 
         -> aux (Math(Printf.sprintf "\\begin{equation}%s\\end{equation}" (generate_latex n))::acc) q
+      | Env (s,n)::q when s="equation*" 
+        -> aux (Math(Printf.sprintf "\\begin{equation*}%s\\end{equation*}" (generate_latex n))::acc) q
       | Env(s,n)::q 
         -> let ast = aux [] n in 
            let ast = List.rev ast
