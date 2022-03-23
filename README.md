@@ -33,7 +33,7 @@ The project currently translate *LaTeX* to human-readable HTML files (the line b
   
 Math image are generated with the `latex.codecogs.com` backend an example bellow with `$\int^b_a f(x) \mathrm(d)x$`
 
-![t](https://latex.codecogs.com/svg.image?\int^b_af(x)\mathrm(d)x)  
+![t](https://latex.codecogs.com/svg.image?\begin{equation}\int^b_af(x)\mathrm(d)x\end{equation})  
 
   
 ## Near Future TODO List
