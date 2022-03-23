@@ -71,15 +71,15 @@ let total_glossaries file =
 (** Transform the glossary to an HTML file *)
 let prints_glossary () =
   if not @@ glossary_provided () then "" else 
-  let line = "<div id=\"glossary\"><br>\n>" in
-  let line = line^"<h2>Glossary</h2>" in
-  let rec aux result (entries) = 
-    match entries with
-    | [] -> result
-    | (desc,(name,def))::q -> let l = "\t<div id=\"" ^ desc ^ "\">\n\t\t<h3>" ^ name ^ "</h3>\n\t\t<p>" ^ def ^ "</p>\n\t</div>\n"
-      in aux (result^l) q
-  in let line = aux line (List.of_seq (Hashtbl.to_seq glossaries))
-  in line^"</div>\n";; 
+    let line = "<div id=\"glossary\"><br>\n>" in
+    let line = line^"<h2>Glossary</h2>" in
+    let rec aux result (entries) = 
+      match entries with
+      | [] -> result
+      | (desc,(name,def))::q -> let l = "\t<div id=\"" ^ desc ^ "\">\n\t\t<h3>" ^ name ^ "</h3>\n\t\t<p>" ^ def ^ "</p>\n\t</div>\n"
+        in aux (result^l) q
+    in let line = aux line (List.of_seq (Hashtbl.to_seq glossaries))
+    in line^"</div>\n";; 
 
 let recognize_gls name = 
   try 

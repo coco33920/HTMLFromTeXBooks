@@ -8,60 +8,60 @@ let print_table_of_content ast min_chap =
   let count = [|1;1;1;1|] in
   let rec aux acc ast = 
     match ast with
-      | [] -> acc
-      | Chapter (s,l)::q -> 
-        let chapnum = count.(0) in
-            begin
-              count.(0) <- count.(0) + 1;
-              count.(1) <- 1;
-              count.(2) <- 1;
-              count.(3) <- 1;
-            end;
-            let str = aux "" l in
-            let new_line = if chapnum>=min_chap then Printf.sprintf "<li><a href=\"#c%i\">Chapter %i : %s</a></li>\n" 
-              chapnum (chapnum-min_chap+1) s else "" in
-            aux (acc^new_line^str) q
+    | [] -> acc
+    | Chapter (s,l)::q -> 
+      let chapnum = count.(0) in
+      begin
+        count.(0) <- count.(0) + 1;
+        count.(1) <- 1;
+        count.(2) <- 1;
+        count.(3) <- 1;
+      end;
+      let str = aux "" l in
+      let new_line = if chapnum>=min_chap then Printf.sprintf "<li><a href=\"#c%i\">Chapter %i : %s</a></li>\n" 
+            chapnum (chapnum-min_chap+1) s else "" in
+      aux (acc^new_line^str) q
 
-      | Section (s,l)::q -> 
-        let chapnum,secnum = count.(0),count.(1) in
-        begin
-          count.(1) <- count.(1) + 1;
-          count.(2) <- 1;
-          count.(3) <- 1;
-        end;
-        let str = aux "" l in
-        let new_line = Printf.sprintf "<li><a href=\"#s%f\">Section %i.%i : %s</a></li>\n" 
+    | Section (s,l)::q -> 
+      let chapnum,secnum = count.(0),count.(1) in
+      begin
+        count.(1) <- count.(1) + 1;
+        count.(2) <- 1;
+        count.(3) <- 1;
+      end;
+      let str = aux "" l in
+      let new_line = Printf.sprintf "<li><a href=\"#s%f\">Section %i.%i : %s</a></li>\n" 
           (2.**(float chapnum)*.3.**(float secnum)) (chapnum-min_chap+1) secnum s in
-        aux (acc^new_line^str) q
-      
-      | Subsection (s,l)::q -> 
-        let chapnum,secnum,ssecnum = count.(0),count.(1),count.(2) in
-        begin
-          count.(2) <- count.(2) + 1;
-          count.(3) <- 1;
-        end;
-        let str = aux "" l in
-        let new_line = Printf.sprintf "<li><a href=\"#ss%f\">Subsection %i.%i.%i : %s</a></li>\n" 
-        (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)) (chapnum-min_chap+1) secnum ssecnum s in
-        aux  (acc^new_line^str) q
-      
-      | Subsubsection (s,l)::q ->
-        let chapnum,secnum,ssecnum,sssecnum = count.(0),count.(1),count.(2),count.(3) in
-        begin
-          count.(3) <- count.(3) + 1;
-        end;
-        let str = aux "" l in
-        let new_line = Printf.sprintf "<li><a href=\"#sss%f\">Subsubsection %i.%i.%i.%i : %s</a></li>\n" 
-        (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)*.7.**(float sssecnum)) (chapnum-min_chap+1) secnum ssecnum sssecnum s in
-        aux  (acc^new_line^str) q
-      | Env (_,l)::q -> let a = aux acc l in aux (acc^a) q
-      | _::q -> aux acc q
+      aux (acc^new_line^str) q
+
+    | Subsection (s,l)::q -> 
+      let chapnum,secnum,ssecnum = count.(0),count.(1),count.(2) in
+      begin
+        count.(2) <- count.(2) + 1;
+        count.(3) <- 1;
+      end;
+      let str = aux "" l in
+      let new_line = Printf.sprintf "<li><a href=\"#ss%f\">Subsection %i.%i.%i : %s</a></li>\n" 
+          (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)) (chapnum-min_chap+1) secnum ssecnum s in
+      aux  (acc^new_line^str) q
+
+    | Subsubsection (s,l)::q ->
+      let chapnum,secnum,ssecnum,sssecnum = count.(0),count.(1),count.(2),count.(3) in
+      begin
+        count.(3) <- count.(3) + 1;
+      end;
+      let str = aux "" l in
+      let new_line = Printf.sprintf "<li><a href=\"#sss%f\">Subsubsection %i.%i.%i.%i : %s</a></li>\n" 
+          (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)*.7.**(float sssecnum)) (chapnum-min_chap+1) secnum ssecnum sssecnum s in
+      aux  (acc^new_line^str) q
+    | Env (_,l)::q -> let a = aux acc l in aux (acc^a) q
+    | _::q -> aux acc q
   in (aux "" ast);;
 
-  let parse_to_html ?(min_chap=1) write_before ast= 
+let parse_to_html ?(min_chap=1) write_before ast= 
   let count = [|1;1;1;1|] in
   let rec aux ?(write=write_before) acc ast = 
-  match ast with
+    match ast with
     | [] -> acc
     | Nul::q -> aux acc q
     | Line s::q -> 
@@ -74,65 +74,65 @@ let print_table_of_content ast min_chap =
       in aux ~write:write (acc^line) q
     | AtomicCmd (s,_)::q ->
       let new_line = (match s with
-        | "par" -> "<br/>\n"
-        | "bigskip" -> "</p>\n\n<p>\n"
-        | "\\" -> "<br/>\n"
-        | "printglossaries" -> ""
-        | "sep" -> "<div class=\"center\"><b>***</b></div>"
-        | "item" -> "·"
-        | "newline" -> "<br/>\n"
-        | "ast" -> "*"
-        | e ->
-          (try 
-            let structure = Hashtbl.find commands e in 
-            let str = aux ~write:write acc structure 
-            in str 
-          with _ -> ""))
+          | "par" -> "<br/>\n"
+          | "bigskip" -> "</p>\n\n<p>\n"
+          | "\\" -> "<br/>\n"
+          | "printglossaries" -> ""
+          | "sep" -> "<div class=\"center\"><b>***</b></div>"
+          | "item" -> "·"
+          | "newline" -> "<br/>\n"
+          | "ast" -> "*"
+          | e ->
+            (try 
+               let structure = Hashtbl.find commands e in 
+               let str = aux ~write:write acc structure 
+               in str 
+             with _ -> ""))
       in let new_acc = if write then acc^new_line^"\n" else ""
       in aux ~write:write new_acc q
-    
+
     | OneArgCmd (s,_,l)::q -> 
       let str = aux "" l in 
       let new_line = (match s with
-        | "par" -> "<br/>\n"
-        | "bigskip" -> "</p>\n\n<p>\n"
-        | "\\" -> "<br/>\n"
-        | "printglossaries" -> ""
-        | "item" -> "·"
-        | "sep" -> "<div class=\"center\"><b>***</b></div>"
-        | "newline" -> "<br/>\n"
-        | "ast" -> "*"
-        | "gls" ->
+          | "par" -> "<br/>\n"
+          | "bigskip" -> "</p>\n\n<p>\n"
+          | "\\" -> "<br/>\n"
+          | "printglossaries" -> ""
+          | "item" -> "·"
+          | "sep" -> "<div class=\"center\"><b>***</b></div>"
+          | "newline" -> "<br/>\n"
+          | "ast" -> "*"
+          | "gls" ->
             (match l with 
-              | [] -> ""
-              | Line s::_ -> 
-                let name,_ = recognize_gls s in Printf.sprintf "<a href=\"#%s\">%s</a> " s name
-              | _::_ -> "")
-        | "textit" -> (Printf.sprintf "<i>%s</i>" str) 
-        | "textbf" -> (Printf.sprintf "<b>%s</b>" str)
-        | "url" -> (Printf.sprintf "<a href=\"%s\">%s</a>" (Str.global_replace (Str.regexp "\n") "" str) str)
-        | e ->
-          (try 
-            let structure = Hashtbl.find commands e in 
-            let str = aux ~write:write acc structure 
-            in str 
-          with _ -> ""))
+             | [] -> ""
+             | Line s::_ -> 
+               let name,_ = recognize_gls s in Printf.sprintf "<a href=\"#%s\">%s</a> " s name
+             | _::_ -> "")
+          | "textit" -> (Printf.sprintf "<i>%s</i>" str) 
+          | "textbf" -> (Printf.sprintf "<b>%s</b>" str)
+          | "url" -> (Printf.sprintf "<a href=\"%s\">%s</a>" (Str.global_replace (Str.regexp "\n") "" str) str)
+          | e ->
+            (try 
+               let structure = Hashtbl.find commands e in 
+               let str = aux ~write:write acc structure 
+               in str 
+             with _ -> ""))
       in let new_acc = if write then acc^(new_line) else ""
       in aux ~write:write new_acc q
-    
+
     | Chapter (s,l)::q -> 
       let chapnum = count.(0) in
-          begin
-            count.(0) <- count.(0) + 1;
-            count.(1) <- 1;
-            count.(2) <- 1;
-            count.(3) <- 1;
-          end;
-          let str = aux ~write:(chapnum>=min_chap) "" l in
-          let new_line = if chapnum>=min_chap then Printf.sprintf "<h1 id=\"c%i\">Chapter %i : %s</h1><br/>\n" 
+      begin
+        count.(0) <- count.(0) + 1;
+        count.(1) <- 1;
+        count.(2) <- 1;
+        count.(3) <- 1;
+      end;
+      let str = aux ~write:(chapnum>=min_chap) "" l in
+      let new_line = if chapnum>=min_chap then Printf.sprintf "<h1 id=\"c%i\">Chapter %i : %s</h1><br/>\n" 
             chapnum (chapnum-min_chap+1) s else "" in
-          aux ~write:write (acc^new_line^str) q
-    
+      aux ~write:write (acc^new_line^str) q
+
     | Section (s,l)::q -> 
       let chapnum,secnum = count.(0),count.(1) in
       begin
@@ -142,9 +142,9 @@ let print_table_of_content ast min_chap =
       end;
       let str = aux ~write:write "" l in
       let new_line = Printf.sprintf "<h2 id=\"s%f\">Section %i.%i : %s</h2><br/>\n" 
-        (2.**(float chapnum)*.3.**(float secnum)) (chapnum-min_chap+1) secnum s in
+          (2.**(float chapnum)*.3.**(float secnum)) (chapnum-min_chap+1) secnum s in
       aux ~write:write (acc^new_line^str) q
-    
+
     | Subsection (s,l)::q -> 
       let chapnum,secnum,ssecnum = count.(0),count.(1),count.(2) in
       begin
@@ -153,9 +153,9 @@ let print_table_of_content ast min_chap =
       end;
       let str = aux ~write:write "" l in
       let new_line = Printf.sprintf "<h3 id=\"ss%f\">Subsection %i.%i.%i : %s</h3><br/>\n" 
-      (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)) (chapnum-min_chap+1) secnum ssecnum s in
+          (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)) (chapnum-min_chap+1) secnum ssecnum s in
       aux ~write:write (acc^new_line^str) q
-    
+
     | Subsubsection (s,l)::q ->
       let chapnum,secnum,ssecnum,sssecnum = count.(0),count.(1),count.(2),count.(3) in
       begin
@@ -163,15 +163,15 @@ let print_table_of_content ast min_chap =
       end;
       let str = aux ~write:write "" l in
       let new_line = Printf.sprintf "<h4 id=\"sss%f\">Subsubsection %i.%i.%i.%i : %s</h4><br/>\n" 
-      (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)*.7.**(float sssecnum)) (chapnum-min_chap+1) secnum ssecnum sssecnum s in
+          (2.**(float chapnum)*.3.**(float secnum)*.5.**(float ssecnum)*.7.**(float sssecnum)) (chapnum-min_chap+1) secnum ssecnum sssecnum s in
       aux ~write:write (acc^new_line^str) q
-    
+
     | Env (s,l)::q -> 
       let str = aux ~write:write "" l in 
       let new_line = (match s with
-        | "document" -> str
-        | "center" -> Printf.sprintf "<div style=\"margin: auto; text-align: center;\">\n%s\n</div>" str
-        | _ -> str)
+          | "document" -> str
+          | "center" -> Printf.sprintf "<div style=\"margin: auto; text-align: center;\">\n%s\n</div>" str
+          | _ -> str)
       in aux ~write:write (acc^new_line^"\n") q
     | _::q -> aux acc q
   in aux "" ast;;
@@ -193,21 +193,21 @@ let prepare_body name str toc =
   in let line = line ^ "</body>"
   in line;;
 
-   
-  let pre_parse_file file = 
-    let str = read_file file in
-    let str = String.concat "\n" str in
-    let a = parse_string str 
-    in let  p,doc = separate_preamble a 
-    in read_preamble p;
-    let doc = separate_sections doc
-    in let doc = calculate_environments doc 
-    in let doc = Mathgen.re_calculate_env doc
-    in 
-    (match (Hashtbl.find_opt preamble "glossary") with
-      | Some s -> init_glossary s
-      | None -> (););
-    doc;;
+
+let pre_parse_file file = 
+  let str = read_file file in
+  let str = String.concat "\n" str in
+  let a = parse_string str 
+  in let  p,doc = separate_preamble a 
+  in read_preamble p;
+  let doc = separate_sections doc
+  in let doc = calculate_environments doc 
+  in let doc = Mathgen.re_calculate_env doc
+  in 
+  (match (Hashtbl.find_opt preamble "glossary") with
+   | Some s -> init_glossary s
+   | None -> (););
+  doc;;
 
 
 let print_file_in_html ?(min_chap=1) ?(write_before=false) file outname =
