@@ -1,5 +1,5 @@
 html-documentation:
-	dune build @doc-private
+	dune build @doc
 	chmod -R 776 _build/default/_doc/*
 	cp -a _build/default/_doc/_html/. docs/doc/
 	mv docs/doc/htmlfromtexbooks*/H* docs/doc/htmlfromtexbooks
