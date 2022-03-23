@@ -28,7 +28,7 @@ htmlfromtexbooks
 by default it only prints after the first (or the nth depending on the command line args) chapter was read you can change that 
 behaviour with the `--write` argument
 ```bash
-htmlfromtexbooks
+htmlfromtexbooks --write
 ```
 A full usage breakdown will be quickly made
 
