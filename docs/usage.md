@@ -86,11 +86,3 @@ The full command line compilation for agh/agh-current/agh-french is
 ```bash
 htmlfromtexbooks --input agh.tex --output web/agh.html --use-glossary glossary.tex --name "A Galactic HRT" --start-chapter 2
 ```
-
-## Support
-The script currently supports the following features:
-* Parsing simple TeX into a human-readable HTML file
-* Support for \textit and \textbf with `<i>` and `<b>`
-* Support for parsing \url statements 
-* Support for glossaries (reads the \gls function)
-* Support for the center environment
