@@ -31,6 +31,11 @@ The project currently translate *LaTeX* to human-readable HTML files (the line b
     - Equation
     - Equation*
   
+Math image are generated with the `latex.codecogs.com` backend an example bellow with `$\int^b_a f(x) \mathrm(d)x$`
+
+![t](https://latex.codecogs.com/svg.image?\int^b_af(x)\mathrm(d)x)  
+
+  
 ## Near Future TODO List
 * parsing glossary entries from a glossary file and printing the `gls` with a link to the glossary 
 * reference
