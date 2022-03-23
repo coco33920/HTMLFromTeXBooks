@@ -10,6 +10,42 @@ The purpose of this project **is not** and never will be a kind of "TeX To HTML"
 and LaTeX specification. This is a tool mainly done *for me* for my usage, that is publishing my book on ScribbleHub and the web. I'm sure you can find real compilers if you want to support 
 the full specification of TeX and LaTeX
 
+## Install
+
+### Downloading last stable from release
+The **Automatic Script** install is available here, just type this command and the `htmlfromtexbooks` is installed under `~/.local/bin`
+```shell
+curl https://raw.githubusercontent.com/coco33920/HTMLFromTeXBooks/master/downloading.sh | sh
+```
+
+Alternatively you can download the script then run it if you want to read it before executing it
+```shell
+wget https://raw.githubusercontent.com/coco33920/HTMLFromTeXBooks/master/downloading.sh
+sh downloading.sh
+```
+
+Or executing the individual commands themselves
+```shell 
+wget https://github.com/coco33920/HTMLFromTeXBooks/releases/latest/download/htmlfromtexbooks
+mv htmlfromtexbooks ~/.local/bin/htmlfromtexbooks
+chmod +x ~/.local/bin/htmlfromtexbooks
+```
+
+### Building from source
+The script to automatically build from sources 
+```shell
+curl https://raw.githubusercontent.com/coco33920/HTMLFromTeXBooks/master/building.sh | sh
+```  
+
+It builds it with dune and install it under the OPAM path with the name `htmlfromtexbooks`, which 
+performs these commands  
+```shell
+git clone https://github.com/coco33920/HTMLFromTeXBooks
+cd HTMLFromTeXBooks
+dune build @install 
+dune install
+```
+
 ## Support
 The project currently translate *LaTeX* to human-readable HTML files (the line breaks in the HTML follows the line breaks in the TeX file while line breaks on HTML is let to the browser.) and supports the following features:
 
