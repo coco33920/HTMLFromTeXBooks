@@ -34,6 +34,13 @@ A full usage breakdown is available [here](https://doc.nwa2coco.fr/usage.html)
 
 ## Install
 
+### OPAM
+You can install the version **v3.3.1** with opam 
+```shell
+opam install htmlfromtexbooks
+```
+it installs the executable under `htmlfromtexbooks` and the library under `htmlfromtexbooks.lib`
+
 ### Downloading last stable from release
 The **Automatic Script** install is available here, just type this command and the `htmlfromtexbooks` is installed under `~/.local/bin`
 ```shell
@@ -60,7 +67,7 @@ curl https://raw.githubusercontent.com/coco33920/HTMLFromTeXBooks/master/buildin
 ```  
 
 It builds it with dune and install it under the OPAM path with the name `htmlfromtexbooks`, which 
-performs these commands  
+performs these commands. It also installs the library under the name `htmlfromtexbooks.lib`
 ```shell
 git clone https://github.com/coco33920/HTMLFromTeXBooks
 cd HTMLFromTeXBooks
