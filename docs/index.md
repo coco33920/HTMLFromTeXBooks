@@ -34,6 +34,14 @@ A full usage breakdown is available [here](usage.md)
 
 
 ## Install
+
+### OPAM
+You can install the version **v3.3.1** with opam 
+```shell
+opam install htmlfromtexbooks
+```
+it installs the executable under `htmlfromtexbooks` and the library under `htmlfromtexbooks.lib`
+
 ### Downloading last stable from release
 The **Automatic Script** install is available here, just type this command and the `htmlfromtexbooks` is installed under `~/.local/bin`
 ```shell
